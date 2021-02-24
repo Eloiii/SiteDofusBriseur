@@ -1,10 +1,8 @@
 <template>
   <v-app>
     <v-main>
-      <v-row>
-        <v-col>
-          <h1 class="display-4">WSH</h1>
-        </v-col>
+      <v-row align="center" justify="center" style="padding-top: 20px">
+        <h1 class="display-4">Met toi bien frerot</h1>
       </v-row>
 
       <v-row justify="center" style="padding-top: 100px">
@@ -16,7 +14,8 @@
                 auto-select-first
                 clearable
                 :items="items"
-                item-text="text.name"
+                item-text="name"
+                :search-input.sync="itemRecherche"
                 label="Item"
                 placeholder="Recherche un item"
                 ><div slot="prepend-item">
@@ -44,8 +43,10 @@
         <v-col cols="12" sm="8">
           <v-data-table
             :headers="headers"
-            :items="desserts"
+            :items="itemCarac"
             class="elevation-2"
+            disable-pagination
+            :hide-default-footer="true"
           ></v-data-table>
         </v-col>
       </v-row>
@@ -62,33 +63,33 @@ export default {
   },
   data: () => ({
     dialog: false,
+    itemRecherche: "",
     headers: [
-      { text: "Carractéristiques", value: "caracName" },
+      { text: "Caractéristique", value: "caracName" },
       { text: "Valeur", value: "caracValue" },
       { text: "Prix unitaire", value: "prixUnit" },
       { text: "Quantité (Focus)", value: "qt" },
       { text: "Prix (Focus)", value: "prix" },
       { text: "Aucun Focus", value: "" },
     ],
-    desserts: [
-      {
-        name: "Frozen Yogurt",
-        calories: 159,
-        fat: 6.0,
-        carbs: 24,
-        protein: 4.0,
-        iron: "1%",
-      },
-    ],
+    itemCarac: [],
     items: [],
+    equipements: [],
+    weapons: [],
   }),
   methods: {
     async getItems() {
-      console.log("OUIOIOIIUOUIOOUIO");
       try {
-        this.items = await PostService.getPosts();
+        this.items = await PostService.getAllItems();
       } catch (err) {
         console.log(err);
+      }
+    },
+    getItem(val) {
+      for (const item of this.items) {
+        if (item.name === val) {
+          return item;
+        }
       }
     },
   },
@@ -96,10 +97,25 @@ export default {
     dialog(val) {
       !val && this.getItems();
     },
+    itemRecherche(val) {
+      let item = this.getItem(val);
+      if (item !== undefined) {
+        // console.log(item);
+        // let res = []
+        for (const stat of item.statistics) {
+          let realStat = Object.keys(stat);
+          let nomStat = realStat[0];
+          console.log(nomStat + " : " + stat[nomStat].min);
+        }
+      }
+    },
   },
   async created() {
     try {
-      this.items = await PostService.getPosts();
+      this.equipements = await PostService.getAllEquipments();
+      this.weapons = await PostService.getAllWeapons();
+      this.items = [...this.equipements, ...this.weapons];
+      this.items.sort();
     } catch (err) {
       console.log(err);
     }
