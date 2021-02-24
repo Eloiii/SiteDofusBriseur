@@ -45,7 +45,7 @@
           <v-data-table
             :headers="headers"
             :items="desserts"
-            class="elevation-1"
+            class="elevation-2"
           ></v-data-table>
         </v-col>
       </v-row>
@@ -63,17 +63,12 @@ export default {
   data: () => ({
     dialog: false,
     headers: [
-      {
-        text: "Dessert (100g serving)",
-        align: "start",
-        sortable: false,
-        value: "name",
-      },
-      { text: "Calories", value: "calories" },
-      { text: "Fat (g)", value: "fat" },
-      { text: "Carbs (g)", value: "carbs" },
-      { text: "Protein (g)", value: "protein" },
-      { text: "Iron (%)", value: "iron" },
+      { text: "Carractéristiques", value: "caracName" },
+      { text: "Valeur", value: "caracValue" },
+      { text: "Prix unitaire", value: "prixUnit" },
+      { text: "Quantité (Focus)", value: "qt" },
+      { text: "Prix (Focus)", value: "prix" },
+      { text: "Aucun Focus", value: "" },
     ],
     desserts: [
       {
