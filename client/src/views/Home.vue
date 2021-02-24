@@ -20,12 +20,21 @@
                 label="Item"
                 placeholder="Recherche un item"
                 ><div slot="prepend-item">
-                  <v-btn text block @click="dialog = true">
-                    Ajouter item
-                  </v-btn>
-                </div></v-autocomplete
-              >
-              <AddItem v-model="dialog" />
+                  <v-dialog v-model="dialog" persitent>
+                    <template v-slot:activator="{ on, attrs }">
+                      <v-btn
+                        text
+                        block
+                        @click="dialog = true"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                        Ajouter item
+                      </v-btn>
+                    </template>
+                    <AddItem v-model="dialog" />
+                  </v-dialog></div
+              ></v-autocomplete>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -78,10 +87,24 @@ export default {
     ],
     items: [],
   }),
+  methods: {
+    async getItems() {
+      console.log("OUIOIOIIUOUIOOUIO");
+      try {
+        this.items = await PostService.getPosts();
+      } catch (err) {
+        console.log(err);
+      }
+    },
+  },
+  watch: {
+    dialog(val) {
+      !val && this.getItems();
+    },
+  },
   async created() {
     try {
       this.items = await PostService.getPosts();
-      console.log(this.items);
     } catch (err) {
       console.log(err);
     }

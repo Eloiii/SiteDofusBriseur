@@ -34,7 +34,13 @@
         </v-form>
       </v-card-text>
       <v-card-actions>
-        <v-btn color="success" @click="addItem" v-if="listCaracs.length > 0"
+        <v-btn
+          color="success"
+          @click="
+            addItem();
+            $emit('input', false);
+          "
+          v-if="listCaracs.length > 0"
           >Ajouter l'item</v-btn
         >
         <v-spacer />
