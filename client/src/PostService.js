@@ -3,7 +3,7 @@ import axios from "axios";
 const url = "/api/posts";
 
 class PostService {
-  static getPosts() {
+  static getRunes() {
     return new Promise((resolve, reject) => {
       axios
         .get(url)
@@ -45,7 +45,7 @@ class PostService {
     });
   }
 
-  static insertPost(text) {
+  static insertRune(text) {
     return axios.post(url, {
       text,
     });
