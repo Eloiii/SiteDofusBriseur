@@ -132,7 +132,7 @@ export default {
     itemLevel: 0,
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
-      counter: (value) => value.length <= 3 || "Max 3 caractères",
+      counter: (value) => value.length <= 4 || "Max 3 caractères",
     },
   }),
   methods: {
