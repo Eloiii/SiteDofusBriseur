@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const url = "/api/posts";
+const urlCoef = "/api/posts/coef";
 
 class PostService {
   static getRunes() {
@@ -48,6 +49,26 @@ class PostService {
   static insertRune(text) {
     return axios.post(url, {
       text,
+    });
+  }
+
+  static getCoefs() {
+    return new Promise((resolve, reject) => {
+      axios
+        .get(urlCoef)
+        .then((res) => {
+          const data = res.data;
+          resolve(data);
+        })
+        .catch((err) => {
+          reject(err);
+        });
+    });
+  }
+
+  static updateCoef(itemEtCoef) {
+    return axios.post(urlCoef, {
+      itemEtCoef,
     });
   }
 }

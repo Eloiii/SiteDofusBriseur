@@ -39,7 +39,29 @@
           </v-card>
         </v-col>
       </v-row>
+      <v-row justify="center" style="padding-top: 50px">
+        <v-col cols="12" sm="5">
+          <v-text-field
+            v-model="coef"
+            outlined
+            label="Coefficient"
+            :rules="[reglesCoef.required, reglesCoef.counter]"
+            prepend-inner-icon="mdi-percent"
+            append-icon="mdi-content-save"
+            @click:append="updateCoef"
+            v-if="this.itemRecherche"
+          ></v-text-field>
+          <v-snackbar v-model="snackbar">
+            Coefficient enregistré !
 
+            <template v-slot:action="{ attrs }">
+              <v-btn color="pink" text v-bind="attrs" @click="snackbar = false">
+                Fermer
+              </v-btn>
+            </template>
+          </v-snackbar>
+        </v-col>
+      </v-row>
       <v-row justify="center" style="padding-top: 100px">
         <v-col cols="12" sm="8">
           <v-data-table
@@ -104,6 +126,14 @@ export default {
     weapons: [],
     runesData: [],
     newPrix: 0,
+    coef: 100,
+    coefs: [],
+    snackbar: false,
+    itemLevel: 0,
+    reglesCoef: {
+      required: (value) => !!value || "Nécessaire.",
+      counter: (value) => value.length <= 3 || "Max 3 caractères",
+    },
   }),
   methods: {
     clearTable() {
@@ -154,8 +184,35 @@ export default {
         this.itemTable.push(realStat);
       }
     },
+    async getCoefs() {
+      try {
+        this.coefs = await PostService.getCoefs();
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    setCoef(itemName) {
+      for (const item of this.coefs) {
+        if (item.nom === itemName) {
+          this.coef = item.coef;
+        }
+      }
+    },
+
+    updateCoef() {
+      PostService.updateCoef({
+        nom: this.itemRecherche,
+        coef: parseInt(this.coef),
+      });
+      this.getCoefs();
+      this.snackbar = true;
+    },
   },
   watch: {
+    coef(val) {
+      !val && val.length > 0 && this.getCoefs();
+    },
     dialog(val) {
       !val && this.getItems();
     },
@@ -163,6 +220,8 @@ export default {
       let item = this.getItem(val);
       if (item !== undefined) {
         this.displayItemStats(item);
+        this.setCoef(item.name);
+        this.itemLevel = item.level;
       }
     },
   },
@@ -173,6 +232,11 @@ export default {
       this.items = [...this.equipements, ...this.weapons];
       this.items.sort();
       this.getRunes();
+      this.getCoefs();
+      let yo = [];
+      for (const item of this.items) {
+        yo.push(item.name);
+      }
     } catch (err) {
       console.log(err);
     }
