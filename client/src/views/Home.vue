@@ -62,7 +62,7 @@
           </v-snackbar>
         </v-col>
       </v-row>
-      <v-row justify="center" style="padding-top: 100px">
+      <v-row justify="center" style="padding-top: 50px">
         <v-col cols="12" sm="8">
           <v-data-table
             :headers="headers"
@@ -162,6 +162,7 @@ export default {
         prix: parseInt(prix),
       }).then(() => {
         this.getRunes().then(() => {
+          this.maxPrix = -5;
           this.displayItemStats(this.getItem(this.itemRecherche));
         });
       });
@@ -193,7 +194,7 @@ export default {
         let readableStat = Object.keys(stat);
         let nomStat = readableStat[0];
         let caracValue = stat[nomStat].min;
-        if (caracValue >= 0) {
+        if (caracValue >= 0 && !nomStat.startsWith("(")) {
           if (nomStat === "2% Critique" || nomStat === "3% Critique") {
             nomStat = "% Critique";
           }
@@ -298,7 +299,7 @@ export default {
     },
 
     quantityFocus(stat) {
-      return (
+      let res =
         Math.round(
           ((this.getTotalWeight() +
             stat.caracValue * this.getUnitWeight(stat.caracName)) /
@@ -309,8 +310,15 @@ export default {
             (this.coef / 100) *
             0.55 *
             100
-        ) / 100
-      );
+        ) / 100;
+      console.log(((Math.round(res) - res) / res) * 100, res);
+      if (res - Math.floor(res) < 0.5) {
+        return Math.floor(res);
+      } else if (((Math.round(res) - res) / res) * 100 >= 2) {
+        return Math.round(res);
+      } else {
+        return res;
+      }
     },
 
     setPrix(stat) {
@@ -334,10 +342,12 @@ export default {
   watch: {
     coef(val) {
       !val && val.length > 0 && this.getCoefs();
+      this.maxPrix = -5;
       this.calculateNoFocusPrice();
     },
     dialog(val) {
       !val && this.getItems();
+      this.maxPrix = -5;
     },
     itemRecherche(val) {
       let item = this.getItem(val);
