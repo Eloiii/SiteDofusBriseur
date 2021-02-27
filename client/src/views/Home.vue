@@ -322,7 +322,9 @@ export default {
     },
 
     setPrix(stat) {
-      return this.quantityFocus(stat) * this.getRunePrix(stat.caracName);
+      return Math.round(
+        this.quantityFocus(stat) * this.getRunePrix(stat.caracName)
+      );
     },
 
     fillTableWithCalculations() {
