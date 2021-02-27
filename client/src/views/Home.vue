@@ -41,6 +41,9 @@
       </v-row>
       <v-row justify="center" style="padding-top: 50px">
         <v-col cols="12" sm="5">
+          <v-img :src="getImageLink"></v-img>
+        </v-col>
+        <v-col cols="12" sm="5">
           <v-text-field
             v-model="coef"
             outlined
@@ -130,6 +133,7 @@ export default {
     coefs: [],
     snackbar: false,
     itemLevel: 0,
+    imageLink: "",
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
       counter: (value) => value.length <= 4 || "Max 3 caractères",
@@ -220,9 +224,15 @@ export default {
       let item = this.getItem(val);
       if (item !== undefined) {
         this.displayItemStats(item);
+        this.imageLink = item.imgUrl;
         this.setCoef(item.name);
         this.itemLevel = item.level;
       }
+    },
+  },
+  computed: {
+    getImageLink() {
+      return this.imageLink;
     },
   },
   async created() {
