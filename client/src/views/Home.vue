@@ -41,18 +41,15 @@
       </v-row>
       <v-row justify="center" style="padding-top: 50px">
         <v-col cols="12" sm="5">
-          <v-img :src="getImageLink"></v-img>
-        </v-col>
-        <v-col cols="12" sm="5">
           <v-text-field
             v-model="coef"
             outlined
             label="Coefficient"
-            :rules="[reglesCoef.required, reglesCoef.counter]"
+            :rules="[reglesCoef.required]"
             prepend-inner-icon="mdi-percent"
             append-icon="mdi-content-save"
             @click:append="updateCoef"
-            v-if="this.itemRecherche"
+            v-if="this.isItemRecherche"
           ></v-text-field>
           <v-snackbar v-model="snackbar">
             Coefficient enregistré !
@@ -74,6 +71,11 @@
             disable-pagination
             :hide-default-footer="true"
           >
+            <template v-slot:item.prixFocus="props">
+              <v-chip :color="sortPrix(props.item.prixFocus)" dark>
+                {{ props.item.prixFocus }}
+              </v-chip>
+            </template>
             <template v-slot:item.prixUnit="props">
               <v-edit-dialog
                 large
@@ -119,9 +121,9 @@ export default {
       { text: "Caractéristique", value: "caracName" },
       { text: "Valeur", value: "caracValue" },
       { text: "Prix unitaire", value: "prixUnit" },
-      { text: "Quantité (Focus)", value: "qt" },
-      { text: "Prix (Focus)", value: "prix" },
-      { text: "Aucun Focus", value: "" },
+      { text: "Quantité (Focus)", value: "qtFocus" },
+      { text: "Prix (Focus)", value: "prixFocus" },
+      { text: "Aucun Focus", value: "qtNoFocus" },
     ],
     itemTable: [],
     items: [],
@@ -134,22 +136,34 @@ export default {
     snackbar: false,
     itemLevel: 0,
     imageLink: "",
+    isItemRecherche: false,
+    maxPrix: -5,
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
-      counter: (value) => value.length <= 4 || "Max 3 caractères",
     },
   }),
   methods: {
+    sortPrix(prix) {
+      console.log(prix, this.maxPrix);
+      if (prix >= this.maxPrix) {
+        this.maxPrix = prix;
+        return "green";
+      }
+    },
+
     clearTable() {
       this.itemTable = [];
+      this.isItemRecherche = false;
+      this.maxPrix = -5;
     },
     save({ caracName, prix }) {
       PostService.insertRune({
         carac: caracName,
         prix: parseInt(prix),
-      });
-      this.getRunes().then(() => {
-        this.displayItemStats(this.getItem(this.itemRecherche));
+      }).then(() => {
+        this.getRunes().then(() => {
+          this.displayItemStats(this.getItem(this.itemRecherche));
+        });
       });
     },
     async getRunes() {
@@ -178,15 +192,22 @@ export default {
       for (const stat of item.statistics) {
         let readableStat = Object.keys(stat);
         let nomStat = readableStat[0];
+        let caracValue = stat[nomStat].min;
+        if (caracValue >= 0) {
+          if (nomStat === "2% Critique" || nomStat === "3% Critique") {
+            nomStat = "% Critique";
+          }
 
-        let prix = this.getRunePrix(nomStat);
-        let realStat = {
-          caracName: nomStat,
-          caracValue: stat[nomStat].min,
-          prixUnit: prix,
-        };
-        this.itemTable.push(realStat);
+          let prix = this.getRunePrix(nomStat);
+          let realStat = {
+            caracName: nomStat,
+            caracValue: caracValue,
+            prixUnit: prix,
+          };
+          this.itemTable.push(realStat);
+        }
       }
+      this.fillTableWithCalculations();
     },
     async getCoefs() {
       try {
@@ -208,14 +229,112 @@ export default {
       PostService.updateCoef({
         nom: this.itemRecherche,
         coef: parseInt(this.coef),
+      }).then(() => {
+        this.getCoefs();
+        this.snackbar = true;
+        this.displayItemStats(this.getItem(this.itemRecherche));
       });
-      this.getCoefs();
-      this.snackbar = true;
+    },
+
+    calculateNoFocusPrice() {
+      let total = 0;
+      for (const stat of this.itemTable) {
+        total =
+          total +
+          Math.floor(this.quantityNoFocus(stat)) *
+            this.getRunePrix(stat.caracName);
+      }
+    },
+
+    calculateMaxFocusValue() {
+      let max = 0;
+      for (const stat of this.itemTable) {
+        max = Math.max(
+          max,
+          Math.floor(this.quantityFocus(stat)) *
+            this.getRunePrix(stat.caracName)
+        );
+      }
+      console.log(max);
+    },
+
+    getUnitWeight(statName) {
+      for (const runeGroup of this.runesData) {
+        if (runeGroup.carac === statName) {
+          return runeGroup.poidsUnité;
+        }
+      }
+    },
+
+    getRuneWeight(statName) {
+      for (const runeGroup of this.runesData) {
+        if (runeGroup.carac === statName) {
+          return runeGroup.poidsRune;
+        }
+      }
+    },
+
+    quantityNoFocus(stat) {
+      return (
+        Math.round(
+          ((((stat.caracValue * this.getUnitWeight(stat.caracName)) /
+            this.getRuneWeight(stat.caracName)) *
+            this.itemLevel *
+            0.025 *
+            this.coef) /
+            100) *
+            0.55 *
+            100
+        ) / 100
+      );
+    },
+
+    getTotalWeight() {
+      let total = 0;
+      for (const stat of this.itemTable) {
+        total += stat.caracValue * this.getUnitWeight(stat.caracName);
+      }
+      return total;
+    },
+
+    quantityFocus(stat) {
+      return (
+        Math.round(
+          ((this.getTotalWeight() +
+            stat.caracValue * this.getUnitWeight(stat.caracName)) /
+            2 /
+            this.getRuneWeight(stat.caracName)) *
+            this.itemLevel *
+            0.025 *
+            (this.coef / 100) *
+            0.55 *
+            100
+        ) / 100
+      );
+    },
+
+    setPrix(stat) {
+      return this.quantityFocus(stat) * this.getRunePrix(stat.caracName);
+    },
+
+    fillTableWithCalculations() {
+      for (let index = 0; index < this.itemTable.length; index++) {
+        let res = {
+          caracName: this.itemTable[index].caracName,
+          caracValue: this.itemTable[index].caracValue,
+          prixUnit: this.itemTable[index].prixUnit,
+          qtFocus: this.quantityFocus(this.itemTable[index]),
+          prixFocus: this.setPrix(this.itemTable[index]),
+          qtNoFocus: this.quantityNoFocus(this.itemTable[index]),
+        };
+        this.itemTable[index] = res;
+      }
     },
   },
   watch: {
     coef(val) {
       !val && val.length > 0 && this.getCoefs();
+      this.calculateNoFocusPrice();
     },
     dialog(val) {
       !val && this.getItems();
@@ -223,16 +342,11 @@ export default {
     itemRecherche(val) {
       let item = this.getItem(val);
       if (item !== undefined) {
-        this.displayItemStats(item);
-        this.imageLink = item.imgUrl;
+        this.isItemRecherche = true;
         this.setCoef(item.name);
         this.itemLevel = item.level;
+        this.displayItemStats(item);
       }
-    },
-  },
-  computed: {
-    getImageLink() {
-      return this.imageLink;
     },
   },
   async created() {
