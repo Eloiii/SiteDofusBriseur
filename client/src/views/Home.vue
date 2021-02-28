@@ -102,8 +102,46 @@
           </v-data-table>
         </v-col>
       </v-row>
+      <v-row justify="space-around" style="padding-top: 50px">
+        <v-btn
+          color="blue-grey"
+          class="white--text mx-auto"
+          @click="addHistorique"
+        >
+          J'ai brisé l'item
+          <v-icon right dark> mdi-database-plus</v-icon>
+        </v-btn>
+      </v-row>
       <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="8"> </v-col>
+        <v-col cols="12" sm="8">
+          <v-card class="mx-auto" max-width="1500" tile>
+            <v-list rounded>
+              <v-subheader>Historique des brisages</v-subheader>
+              <v-list-item-group color="primary">
+                <v-list-item
+                  v-for="(item, i) in historique.slice().reverse()"
+                  :key="i"
+                >
+                  <v-list-item-content>
+                    <v-list-item-title v-text="item.item"></v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-content>
+                    <v-list-item-title v-text="item.date"></v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-content>
+                    <v-list-item-title v-text="item.coef"></v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-content>
+                    <v-list-item-title v-text="item.focus"></v-list-item-title>
+                  </v-list-item-content>
+                  <v-list-item-content>
+                    <v-list-item-title v-text="item.prix"></v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-col>
       </v-row>
     </v-main>
   </v-app>
@@ -141,13 +179,13 @@ export default {
     imageLink: "",
     isItemRecherche: false,
     maxPrix: -5,
+    historique: [],
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
     },
   }),
   methods: {
     sortPrix(prix) {
-      console.log(prix, this.maxPrix);
       if (prix >= this.maxPrix) {
         this.maxPrix = prix;
         return "green";
@@ -363,6 +401,54 @@ export default {
       };
       this.itemTable.push(res);
     },
+
+    displayHistorique() {},
+
+    async addHistorique() {
+      let current = new Date();
+      let cDate =
+        current.getDate() +
+        "-" +
+        (current.getMonth() + 1) +
+        "-" +
+        current.getFullYear();
+      let cTime =
+        current.getHours() +
+        ":" +
+        current.getMinutes() +
+        ":" +
+        current.getSeconds();
+      let dateTime = cDate + " " + cTime;
+      let focusName;
+      let focusPrix;
+      for (const stat of this.itemTable) {
+        if (stat.prixFocus === this.maxPrix) {
+          focusName = stat.caracName;
+          focusPrix = stat.prixFocus;
+        }
+      }
+      if (focusName === "TOTAL SANS FOCUS") {
+        focusName = "Pas de Focus";
+      }
+      let res = {
+        item: this.itemRecherche,
+        date: dateTime,
+        coef: this.coef,
+        focus: focusName,
+        prix: focusPrix,
+      };
+
+      PostService.addHistorique(res).then(() => {
+        this.getHistorique();
+      });
+    },
+    async getHistorique() {
+      try {
+        this.historique = await PostService.getHistorique();
+      } catch (err) {
+        console.log(err);
+      }
+    },
   },
   watch: {
     coef(val) {
@@ -392,6 +478,7 @@ export default {
       this.items.sort();
       this.getRunes();
       this.getCoefs();
+      this.getHistorique();
       let yo = [];
       for (const item of this.items) {
         yo.push(item.name);
