@@ -102,6 +102,9 @@
           </v-data-table>
         </v-col>
       </v-row>
+      <v-row justify="center" style="padding-top: 50px">
+        <v-col cols="12" sm="8"> </v-col>
+      </v-row>
     </v-main>
   </v-app>
 </template>
@@ -193,10 +196,11 @@ export default {
       for (const stat of item.statistics) {
         let readableStat = Object.keys(stat);
         let nomStat = readableStat[0];
+        let test = /^[0-99]+%/;
         let caracValue = stat[nomStat].min;
         if (caracValue >= 0 && !nomStat.startsWith("(")) {
-          if (nomStat === "2% Critique" || nomStat === "3% Critique") {
-            nomStat = "% Critique";
+          if (test.test(nomStat)) {
+            nomStat = nomStat.substr(1, nomStat.length);
           }
 
           let prix = this.getRunePrix(nomStat);
@@ -209,6 +213,7 @@ export default {
         }
       }
       this.fillTableWithCalculations();
+      this.fillNoFocus();
     },
     async getCoefs() {
       try {
@@ -339,6 +344,24 @@ export default {
         };
         this.itemTable[index] = res;
       }
+    },
+
+    fillNoFocus() {
+      let totalSansFocus = 0;
+      for (const stat of this.itemTable) {
+        totalSansFocus += Math.round(
+          this.getRunePrix(stat.caracName) * this.quantityNoFocus(stat)
+        );
+      }
+      let res = {
+        caracName: "TOTAL SANS FOCUS",
+        caracValue: "-",
+        prixUnit: "-",
+        qtFocus: "-",
+        prixFocus: totalSansFocus,
+        qtNoFocus: "-",
+      };
+      this.itemTable.push(res);
     },
   },
   watch: {
