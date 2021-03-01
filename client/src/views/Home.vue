@@ -371,6 +371,7 @@ export default {
             0.55 *
             100
         ) / 100;
+      console.log(res);
       if (res - Math.floor(res) < 0.5) {
         return Math.floor(res);
       } else if (((Math.round(res) - res) / res) * 100 >= 2) {
@@ -415,7 +416,7 @@ export default {
         prixFocus: totalSansFocus,
         qtNoFocus: "-",
       };
-      this.itemTable.push(res);
+      this.itemTable[this.getItem(this.itemRecherche).statistics.length] = res;
     },
 
     displayHistorique() {},
@@ -477,9 +478,12 @@ export default {
     },
   },
   watch: {
-    // coef(val) {
-    //   !val && val.length > 0 &&
-    // },
+    coef(val) {
+      if (val.length > 0) {
+        this.coef = parseInt(val);
+        this.displayItemStats(this.getItem(this.itemRecherche));
+      }
+    },
     dialog(val) {
       !val && this.getItems();
       this.maxPrix = -5;
