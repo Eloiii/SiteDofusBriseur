@@ -182,7 +182,7 @@ export default {
     equipements: [],
     weapons: [],
     runesData: [],
-    newPrix: 0,
+    newPrix: "",
     coef: 100,
     coefs: [],
     snackbar: false,
@@ -218,6 +218,7 @@ export default {
         this.getRunes().then(() => {
           this.maxPrix = -5;
           this.displayItemStats(this.getItem(this.itemRecherche));
+          this.newPrix = "";
         });
       });
     },
@@ -244,6 +245,7 @@ export default {
     },
     displayItemStats(item) {
       this.itemTable = [];
+      this.maxPrix = -5;
       for (const stat of item.statistics) {
         let readableStat = Object.keys(stat);
         let nomStat = readableStat[0];
@@ -288,9 +290,11 @@ export default {
         nom: this.itemRecherche,
         coef: parseInt(this.coef),
       }).then(() => {
-        this.getCoefs();
-        this.snackbar = true;
-        this.displayItemStats(this.getItem(this.itemRecherche));
+        this.getCoefs().then(() => {
+          this.snackbar = true;
+          this.displayItemStats(this.getItem(this.itemRecherche));
+          this.calculateNoFocusPrice();
+        });
       });
     },
 
@@ -473,11 +477,9 @@ export default {
     },
   },
   watch: {
-    coef(val) {
-      !val && val.length > 0 && this.getCoefs();
-      this.maxPrix = -5;
-      this.calculateNoFocusPrice();
-    },
+    // coef(val) {
+    //   !val && val.length > 0 &&
+    // },
     dialog(val) {
       !val && this.getItems();
       this.maxPrix = -5;
@@ -502,10 +504,6 @@ export default {
       this.getRunes();
       this.getCoefs();
       this.getHistorique();
-      let yo = [];
-      for (const item of this.items) {
-        yo.push(item.name);
-      }
     } catch (err) {
       console.log(err);
     }
