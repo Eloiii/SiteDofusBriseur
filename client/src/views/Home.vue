@@ -60,6 +60,17 @@
               </v-btn>
             </template>
           </v-snackbar>
+          <div class="text-center">
+            <v-chip
+              class="ma-2"
+              v-if="this.isItemRecherche"
+              color="indigo darken-3"
+              outlined
+            >
+              <v-icon left> mdi-anvil</v-icon>
+              <strong>{{ dateItem }}</strong>
+            </v-chip>
+          </div>
         </v-col>
       </v-row>
       <v-row justify="center" style="padding-top: 50px">
@@ -180,6 +191,7 @@ export default {
     isItemRecherche: false,
     maxPrix: -5,
     historique: [],
+    dateItem: "",
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
     },
@@ -196,6 +208,7 @@ export default {
       this.itemTable = [];
       this.isItemRecherche = false;
       this.maxPrix = -5;
+      this.dateItem = "";
     },
     save({ caracName, prix }) {
       PostService.insertRune({
@@ -265,6 +278,7 @@ export default {
       for (const item of this.coefs) {
         if (item.nom === itemName) {
           this.coef = item.coef;
+          this.displayItemStats(this.getItem(this.itemRecherche));
         }
       }
     },
@@ -299,7 +313,6 @@ export default {
             this.getRunePrix(stat.caracName)
         );
       }
-      console.log(max);
     },
 
     getUnitWeight(statName) {
@@ -354,7 +367,6 @@ export default {
             0.55 *
             100
         ) / 100;
-      console.log(((Math.round(res) - res) / res) * 100, res);
       if (res - Math.floor(res) < 0.5) {
         return Math.floor(res);
       } else if (((Math.round(res) - res) / res) * 100 >= 2) {
@@ -449,6 +461,16 @@ export default {
         console.log(err);
       }
     },
+    setDateItem() {
+      for (const item of this.historique) {
+        if (item.item === this.itemRecherche) {
+          this.dateItem = item.date;
+        }
+      }
+      if (this.dateItem === "") {
+        this.dateItem = "Pas d'ancien craft";
+      }
+    },
   },
   watch: {
     coef(val) {
@@ -467,6 +489,7 @@ export default {
         this.setCoef(item.name);
         this.itemLevel = item.level;
         this.displayItemStats(item);
+        this.setDateItem();
       }
     },
   },
