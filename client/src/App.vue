@@ -1,6 +1,12 @@
 <template>
   <v-app>
-    <v-navigation-drawer app permanent width="260px" expand-on-hover>
+    <v-navigation-drawer
+      app
+      permanent
+      width="250px"
+      expand-on-hover
+      mini-variant-width="70px"
+    >
       <v-list nav rounded>
         <v-list-item>
           <v-switch
