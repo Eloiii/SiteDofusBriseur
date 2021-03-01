@@ -1,10 +1,9 @@
 <template>
   <v-app>
     <v-main>
-      <v-row align="center" justify="center" style="padding-top: 20px">
+      <v-row align="center" justify="center" style="padding-top: 30px">
         <h1 class="display-4">Met toi bien frerot</h1>
       </v-row>
-
       <v-row justify="center" style="padding-top: 100px">
         <v-col cols="12" sm="5">
           <v-card elevation="7">
@@ -64,7 +63,7 @@
             <v-chip
               class="ma-2"
               v-if="this.isItemRecherche"
-              color="indigo darken-3"
+              color="purple lighten-2"
               outlined
             >
               <v-icon left> mdi-anvil</v-icon>
@@ -122,37 +121,6 @@
           J'ai brisé l'item
           <v-icon right dark> mdi-database-plus</v-icon>
         </v-btn>
-      </v-row>
-      <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="8">
-          <v-card class="mx-auto" max-width="1500" tile>
-            <v-list rounded>
-              <v-subheader>Historique des brisages</v-subheader>
-              <v-list-item-group color="primary">
-                <v-list-item
-                  v-for="(item, i) in historique.slice().reverse()"
-                  :key="i"
-                >
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.item"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.date"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.coef"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.focus"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.prix"></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list-item-group>
-            </v-list>
-          </v-card>
-        </v-col>
       </v-row>
     </v-main>
   </v-app>
@@ -425,9 +393,9 @@ export default {
       let current = new Date();
       let cDate =
         current.getDate() +
-        "-" +
+        "/" +
         (current.getMonth() + 1) +
-        "-" +
+        "/" +
         current.getFullYear();
       let cTime =
         current.getHours() +
@@ -489,6 +457,9 @@ export default {
       this.maxPrix = -5;
     },
     itemRecherche(val) {
+      if (val.length <= 1) {
+        this.clearTable();
+      }
       let item = this.getItem(val);
       if (item !== undefined) {
         this.isItemRecherche = true;
