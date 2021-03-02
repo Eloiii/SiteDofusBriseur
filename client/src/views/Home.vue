@@ -1,127 +1,151 @@
 <template>
   <v-app>
     <v-main>
-      <v-row align="center" justify="center" style="padding-top: 30px">
-        <h1 class="display-4">Met toi bien frerot</h1>
-      </v-row>
-      <v-row justify="center" style="padding-top: 100px">
-        <v-col cols="12" sm="5">
-          <v-card elevation="7">
-            <v-card-title> Choisi un item </v-card-title>
-            <v-card-actions>
-              <v-autocomplete
-                auto-select-first
-                clearable
-                :items="items"
-                item-text="name"
-                :search-input.sync="itemRecherche"
-                label="Item"
-                placeholder="Recherche un item"
-                @click:clear="clearTable"
-                ><div slot="prepend-item">
-                  <v-dialog v-model="dialog" persitent>
-                    <template v-slot:activator="{ on, attrs }">
-                      <v-btn
-                        text
-                        block
-                        @click="dialog = true"
-                        v-bind="attrs"
-                        v-on="on"
-                      >
-                        Ajouter item
-                      </v-btn>
-                    </template>
-                    <AddItem v-model="dialog" />
-                  </v-dialog></div
-              ></v-autocomplete>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-      <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="5">
-          <v-text-field
-            v-model="coef"
-            outlined
-            label="Coefficient"
-            :rules="[reglesCoef.required]"
-            prepend-inner-icon="mdi-percent"
-            append-icon="mdi-content-save"
-            @click:append="updateCoef"
-            v-if="this.isItemRecherche"
-          ></v-text-field>
-          <v-snackbar v-model="snackbar">
-            Coefficient enregistré !
+      <v-container fluid>
+        <v-row align="center" justify="center" style="padding-top: 30px">
+          <h1 class="display-4">Met toi bien frerot</h1>
+        </v-row>
 
-            <template v-slot:action="{ attrs }">
-              <v-btn color="pink" text v-bind="attrs" @click="snackbar = false">
-                Fermer
-              </v-btn>
-            </template>
-          </v-snackbar>
-          <div class="text-center">
-            <v-chip
-              class="ma-2"
-              v-if="this.isItemRecherche"
-              color="purple lighten-2"
+        <v-row justify="center" style="padding-top: 100px">
+          <v-col cols="12" sm="5">
+            <v-card elevation="7">
+              <v-card-title> Choisi un item </v-card-title>
+              <v-card-actions>
+                <v-autocomplete
+                  auto-select-first
+                  clearable
+                  :items="items"
+                  item-text="name"
+                  :search-input.sync="itemRecherche"
+                  label="Item"
+                  placeholder="Recherche un item"
+                  @click:clear="clearTable"
+                  ><div slot="prepend-item">
+                    <v-dialog v-model="dialog" persitent>
+                      <template v-slot:activator="{ on, attrs }">
+                        <v-btn
+                          text
+                          block
+                          @click="dialog = true"
+                          v-bind="attrs"
+                          v-on="on"
+                        >
+                          Ajouter item
+                        </v-btn>
+                      </template>
+                      <AddItem v-model="dialog" />
+                    </v-dialog></div
+                ></v-autocomplete>
+              </v-card-actions>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row style="padding-top: 50px" no-gutters>
+          <v-col md="1" offset-md="2">
+            <v-img
+              width="125px"
+              height="125px"
+              v-if="imgURL.length >= 3"
+              :src="require(`@/assets/items/${imgURL}`)"
+              class="mx-auto"
+            ></v-img>
+          </v-col>
+          <v-col md="4" offset-md="1">
+            <v-text-field
+              v-model="coef"
               outlined
-            >
-              <v-icon left> mdi-anvil</v-icon>
-              <strong>{{ dateItem }}</strong>
-            </v-chip>
-          </div>
-        </v-col>
-      </v-row>
-      <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="8">
-          <v-data-table
-            :headers="headers"
-            :items="itemTable"
-            class="elevation-2"
-            disable-pagination
-            :hide-default-footer="true"
-          >
-            <template v-slot:item.prixFocus="props">
-              <v-chip :color="sortPrix(props.item.prixFocus)" dark>
-                {{ props.item.prixFocus }}
-              </v-chip>
-            </template>
-            <template v-slot:item.prixUnit="props">
-              <v-edit-dialog
-                large
-                persistent
-                @save="
-                  save({
-                    prix: newPrix,
-                    caracName: props.item.caracName,
-                  })
-                "
+              label="Coefficient"
+              :rules="[reglesCoef.required]"
+              prepend-inner-icon="mdi-percent"
+              append-icon="mdi-content-save"
+              @click:append="updateCoef"
+              v-if="this.isItemRecherche"
+            ></v-text-field>
+            <v-snackbar v-model="snackbar">
+              Coefficient enregistré !
+
+              <template v-slot:action="{ attrs }">
+                <v-btn
+                  color="pink"
+                  text
+                  v-bind="attrs"
+                  @click="snackbar = false"
+                >
+                  Fermer
+                </v-btn>
+              </template>
+            </v-snackbar>
+            <div class="text-center">
+              <v-chip
+                class="ma-2"
+                v-if="this.isItemRecherche"
+                color="purple lighten-2"
+                outlined
               >
-                <div>{{ props.item.prixUnit }}</div>
-                <template v-slot:input>
-                  <div class="mt-4 title">Changer le prix de la rune</div>
-                  <v-text-field
-                    hint="Nouveau prix"
-                    single-line
-                    autofocus
-                    v-model="newPrix"
-                  ></v-text-field>
-                </template>
-              </v-edit-dialog>
-            </template>
-          </v-data-table>
-        </v-col>
-      </v-row>
-      <v-row justify="space-around" style="padding-top: 50px">
-        <v-btn
-          color="blue-grey"
-          class="white--text mx-auto"
-          @click="addHistorique"
-        >
-          J'ai brisé l'item
-          <v-icon right dark> mdi-database-plus</v-icon>
-        </v-btn>
-      </v-row>
+                <v-icon left> mdi-anvil</v-icon>
+                <strong>{{ dateItem }}</strong>
+              </v-chip>
+            </div>
+          </v-col>
+        </v-row>
+        <v-row no-gutters>
+          <v-col md="1" offset-md="2">
+            <div class="text-center">
+              <v-chip label>Niveau {{ itemLevel }}</v-chip>
+            </div>
+          </v-col>
+        </v-row>
+        <v-row justify="center">
+          <v-col cols="12" sm="8">
+            <v-data-table
+              :headers="headers"
+              :items="itemTable"
+              class="elevation-2"
+              disable-pagination
+              :hide-default-footer="true"
+            >
+              <template v-slot:item.prixFocus="props">
+                <v-chip :color="sortPrix(props.item.prixFocus)" dark>
+                  {{ props.item.prixFocus }}
+                </v-chip>
+              </template>
+              <template v-slot:item.prixUnit="props">
+                <v-edit-dialog
+                  large
+                  persistent
+                  @save="
+                    save({
+                      prix: newPrix,
+                      caracName: props.item.caracName,
+                    })
+                  "
+                >
+                  <div>{{ props.item.prixUnit }}</div>
+                  <template v-slot:input>
+                    <div class="mt-4 title">Changer le prix de la rune</div>
+                    <v-text-field
+                      hint="Nouveau prix"
+                      single-line
+                      autofocus
+                      v-model="newPrix"
+                    ></v-text-field>
+                  </template>
+                </v-edit-dialog>
+              </template>
+            </v-data-table>
+          </v-col>
+        </v-row>
+        <v-row justify="space-around" style="padding-top: 50px">
+          <v-btn
+            color="blue-grey"
+            class="white--text mx-auto"
+            @click="addHistorique"
+          >
+            J'ai brisé l'item
+            <v-icon right dark> mdi-database-plus</v-icon>
+          </v-btn>
+        </v-row>
+      </v-container>
     </v-main>
   </v-app>
 </template>
@@ -155,7 +179,7 @@ export default {
     coefs: [],
     snackbar: false,
     itemLevel: 0,
-    imageLink: "",
+    imgURL: "",
     isItemRecherche: false,
     maxPrix: -5,
     historique: [],
@@ -339,7 +363,6 @@ export default {
             0.55 *
             100
         ) / 100;
-      console.log(res);
       if (res - Math.floor(res) < 0.5) {
         return Math.floor(res);
       } else if (((Math.round(res) - res) / res) * 100 >= 2) {
@@ -444,6 +467,11 @@ export default {
         this.dateItem = "Pas d'ancien craft";
       }
     },
+
+    setImageURL(item) {
+      let url = item.imgUrl;
+      this.imgURL = url.substr(68);
+    },
   },
   watch: {
     coef(val) {
@@ -457,9 +485,6 @@ export default {
       this.maxPrix = -5;
     },
     itemRecherche(val) {
-      if (val.length <= 1) {
-        this.clearTable();
-      }
       let item = this.getItem(val);
       if (item !== undefined) {
         this.isItemRecherche = true;
@@ -467,6 +492,9 @@ export default {
         this.itemLevel = item.level;
         this.displayItemStats(item);
         this.setDateItem();
+        this.setImageURL(item);
+      } else {
+        this.clearTable();
       }
     },
   },
