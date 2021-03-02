@@ -5,7 +5,6 @@
         <v-row align="center" justify="center" style="padding-top: 30px">
           <h1 class="display-4">Met toi bien frerot</h1>
         </v-row>
-
         <v-row justify="center" style="padding-top: 100px">
           <v-col cols="12" sm="5">
             <v-card elevation="7">
@@ -91,7 +90,9 @@
         <v-row no-gutters>
           <v-col md="1" offset-md="2">
             <div class="text-center">
-              <v-chip label>Niveau {{ itemLevel }}</v-chip>
+              <v-chip label v-if="this.isItemRecherche"
+                >Niveau {{ itemLevel }}</v-chip
+              >
             </div>
           </v-col>
         </v-row>
@@ -201,6 +202,7 @@ export default {
       this.isItemRecherche = false;
       this.maxPrix = -5;
       this.dateItem = "";
+      this.imgURL = "";
     },
     save({ caracName, prix }) {
       PostService.insertRune({
