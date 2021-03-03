@@ -137,14 +137,44 @@
           </v-col>
         </v-row>
         <v-row justify="space-around" style="padding-top: 50px">
-          <v-btn
-            color="blue-grey"
-            class="white--text mx-auto"
-            @click="addHistorique"
-          >
-            J'ai brisé l'item
-            <v-icon right dark> mdi-database-plus</v-icon>
-          </v-btn>
+          <v-dialog v-model="dialogValidation" persistent max-width="600px">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn
+                color="blue-grey"
+                class="white--text mx-auto"
+                v-bind="attrs"
+                v-on="on"
+              >
+                J'ai brisé l'item
+                <v-icon right dark> mdi-database-plus</v-icon>
+              </v-btn>
+            </template>
+            <v-card>
+              <v-card-title>
+                <span class="headline">Le brisage a-t-il été rentable ?</span>
+              </v-card-title>
+              <v-card-text>
+                <v-checkbox v-model="isRentable">
+                  <template v-slot:label>
+                    <div>Le brisage a été rentable.</div>
+                  </template>
+                </v-checkbox></v-card-text
+              >
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="blue darken-1"
+                  text
+                  @click="dialogValidation = false"
+                >
+                  Close
+                </v-btn>
+                <v-btn color="blue darken-1" text @click="addHistorique">
+                  Envoyer
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-row>
       </v-container>
     </v-main>
@@ -161,6 +191,7 @@ export default {
   },
   data: () => ({
     dialog: false,
+    dialogValidation: false,
     itemRecherche: "",
     headers: [
       { text: "Caractéristique", value: "caracName" },
@@ -185,6 +216,8 @@ export default {
     maxPrix: -5,
     historique: [],
     dateItem: "",
+    itemType: "",
+    isRentable: false,
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
     },
@@ -412,22 +445,23 @@ export default {
       this.itemTable[this.getItem(this.itemRecherche).statistics.length] = res;
     },
 
-    displayHistorique() {},
+    minutes_with_leading_zeros(min) {
+      return (min < 10 ? "0" : "") + min;
+    },
 
     async addHistorique() {
+      this.dialogValidation = false;
       let current = new Date();
       let cDate =
-        current.getDate() +
+        ("0" + current.getDate()).slice(-2) +
         "/" +
-        (current.getMonth() + 1) +
+        ("0" + (current.getMonth() + 1)).slice(-2) +
         "/" +
         current.getFullYear();
       let cTime =
-        current.getHours() +
+        this.minutes_with_leading_zeros(current.getHours()) +
         ":" +
-        current.getMinutes() +
-        ":" +
-        current.getSeconds();
+        this.minutes_with_leading_zeros(current.getMinutes());
       let dateTime = cDate + " " + cTime;
       let focusName;
       let focusPrix;
@@ -442,15 +476,19 @@ export default {
       }
       let res = {
         item: this.itemRecherche,
+        type: this.itemType,
+        level: this.itemLevel,
         date: dateTime,
         coef: this.coef,
         focus: focusName,
         prix: focusPrix,
+        rentable: this.isRentable,
       };
 
       PostService.addHistorique(res).then(() => {
         this.getHistorique();
       });
+      this.isRentable = false;
     },
     async getHistorique() {
       try {
@@ -482,16 +520,13 @@ export default {
         this.displayItemStats(this.getItem(this.itemRecherche));
       }
     },
-    dialog(val) {
-      !val && this.getItems();
-      this.maxPrix = -5;
-    },
     itemRecherche(val) {
       let item = this.getItem(val);
       if (item !== undefined) {
         this.isItemRecherche = true;
         this.setCoef(item.name);
         this.itemLevel = item.level;
+        this.itemType = item.type;
         this.displayItemStats(item);
         this.setDateItem();
         this.setImageURL(item);

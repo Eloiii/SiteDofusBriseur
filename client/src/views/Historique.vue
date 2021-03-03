@@ -2,32 +2,58 @@
   <v-app>
     <v-main>
       <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="8">
-          <v-card class="mx-auto" max-width="1500" tile>
-            <v-list rounded>
-              <v-subheader>Historique des brisages</v-subheader>
-              <template v-for="(item, index) in historique.slice().reverse()">
-                <v-divider :key="index"></v-divider>
-                <v-list-item :key="index">
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.item"></v-list-item-title>
-                  </v-list-item-content>
+        <v-col cols="12" sm="10">
+          <v-card>
+            <v-card-title>
+              Historique des brisages
+              <v-spacer></v-spacer>
 
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.date"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.coef"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.focus"></v-list-item-title>
-                  </v-list-item-content>
-                  <v-list-item-content>
-                    <v-list-item-title v-text="item.prix"></v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
+              <v-text-field
+                v-model="search"
+                append-icon="mdi-magnify"
+                label="Recherche item"
+                single-line
+                hide-details
+              ></v-text-field>
+            </v-card-title>
+            <v-data-table
+              :headers="headers"
+              :items="itemTable"
+              class="elevation-2"
+              :items-per-page="20"
+              :search="search"
+              :options.sync="options"
+              :loading="loading"
+              :sort-by.sync="sortBy"
+              :sort-desc.sync="sortDesc"
+              ><template v-slot:body.append>
+                <tr>
+                  <td></td>
+                  <td>
+                    <v-select
+                      :items="itemsType"
+                      v-model="itemType"
+                      label="Type de l'item"
+                      :value="Tout"
+                    ></v-select>
+                  </td>
+                  <td>
+                    <v-text-field
+                      v-model="itemLevel"
+                      label="Level minimum"
+                      max-width="25px"
+                    ></v-text-field>
+                  </td>
+
+                  <td colspan="5"></td>
+                </tr>
               </template>
-            </v-list>
+              <template v-slot:item.rentable="{ item }">
+                <v-simple-checkbox
+                  v-model="item.rentable"
+                  disabled
+                ></v-simple-checkbox> </template
+            ></v-data-table>
           </v-card>
         </v-col>
       </v-row>
@@ -38,14 +64,77 @@
 import PostService from "../PostService";
 export default {
   data: () => ({
-    historique: [],
+    sortBy: "date",
+    sortDesc: true,
+    options: {},
+    itemLevel: 0,
+    itemType: "Tout",
+    search: "",
+    itemTable: [],
+    itemsType: [
+      "Tout",
+      "Amulette",
+      "Anneau",
+      "Bottes",
+      "Ceinture",
+      "Cape",
+      "Chapeau",
+      "Bouclier",
+      "Arc",
+      "Bâton",
+      "Épée",
+      "Pelle",
+      "Baguette",
+      "Hache",
+      "Marteau",
+      "Outil",
+      "Dague",
+    ],
+    loading: false,
   }),
-  async created() {
-    try {
-      this.historique = await PostService.getHistorique();
-    } catch (err) {
-      console.log(err);
-    }
+  computed: {
+    headers() {
+      return [
+        { text: "Nom", value: "item" },
+        {
+          text: "Type",
+          value: "type",
+          filter: (value) => {
+            if (this.itemType === "Tout") return true;
+            return value === this.itemType;
+          },
+        },
+        {
+          text: "Level",
+          value: "level",
+          filter: (value) => {
+            return value >= parseInt(this.itemLevel);
+          },
+        },
+        { text: "Date", value: "date" },
+        { text: "Coef.", value: "coef" },
+        { text: "Focus ?", value: "focus" },
+        { text: "Prix", value: "prix" },
+        { text: "Rentable ?", value: "rentable" },
+      ];
+    },
+  },
+  watch: {
+    options: {
+      handler() {
+        this.getHistorique();
+      },
+      deep: true,
+    },
+  },
+  methods: {
+    getHistorique() {
+      this.loading = true;
+      PostService.getHistorique().then((result) => {
+        this.itemTable = result;
+        this.loading = false;
+      });
+    },
   },
 };
 </script>
