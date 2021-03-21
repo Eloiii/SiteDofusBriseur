@@ -52,8 +52,9 @@
                 <v-simple-checkbox
                   v-model="item.rentable"
                   disabled
-                ></v-simple-checkbox> </template
-            ></v-data-table>
+                ></v-simple-checkbox>
+              </template>
+            </v-data-table>
           </v-card>
         </v-col>
       </v-row>

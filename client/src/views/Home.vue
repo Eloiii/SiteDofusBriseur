@@ -415,7 +415,7 @@ export default {
 
     fillTableWithCalculations() {
       for (let index = 0; index < this.itemTable.length; index++) {
-        let res = {
+        this.itemTable[index] = {
           caracName: this.itemTable[index].caracName,
           caracValue: this.itemTable[index].caracValue,
           prixUnit: this.itemTable[index].prixUnit,
@@ -423,7 +423,6 @@ export default {
           prixFocus: this.setPrix(this.itemTable[index]),
           qtNoFocus: this.quantityNoFocus(this.itemTable[index]),
         };
-        this.itemTable[index] = res;
       }
     },
 
@@ -434,7 +433,7 @@ export default {
           this.getRunePrix(stat.caracName) * this.quantityNoFocus(stat)
         );
       }
-      let res = {
+      this.itemTable[this.getItem(this.itemRecherche).statistics.length] = {
         caracName: "TOTAL SANS FOCUS",
         caracValue: "-",
         prixUnit: "-",
@@ -442,7 +441,6 @@ export default {
         prixFocus: totalSansFocus,
         qtNoFocus: "-",
       };
-      this.itemTable[this.getItem(this.itemRecherche).statistics.length] = res;
     },
 
     minutes_with_leading_zeros(min) {
@@ -483,6 +481,7 @@ export default {
         focus: focusName,
         prix: focusPrix,
         rentable: this.isRentable,
+        img: this.imgUrl,
       };
 
       PostService.addHistorique(res).then(() => {
@@ -541,9 +540,9 @@ export default {
       this.weapons = await PostService.getAllWeapons();
       this.items = [...this.equipements, ...this.weapons];
       this.items.sort();
-      this.getRunes();
-      this.getCoefs();
-      this.getHistorique();
+      await this.getRunes();
+      await this.getCoefs();
+      await this.getHistorique();
     } catch (err) {
       console.log(err);
     }

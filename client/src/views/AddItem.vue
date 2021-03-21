@@ -65,8 +65,7 @@ export default {
       res["name"] = this.name;
       for (const carac of this.listCaracs) {
         let nom = carac.caracName;
-        let value = carac.caracValue;
-        res[nom] = value;
+        res[nom] = carac.caracValue;
       }
       await PostService.insertPost(res);
     },
