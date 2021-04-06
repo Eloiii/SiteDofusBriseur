@@ -3,7 +3,7 @@
     <v-main>
       <v-container fluid>
         <v-row align="center" justify="center" style="padding-top: 30px">
-          <h1 class="display-4">Met toi bien frerot</h1>
+          <h1 class="display-3">Calculateur brisage Dofus</h1>
         </v-row>
         <v-row justify="center" style="padding-top: 100px">
           <v-col cols="12" sm="5">
