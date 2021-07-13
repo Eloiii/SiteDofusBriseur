@@ -8,7 +8,7 @@
         <v-row justify="center" style="padding-top: 100px">
           <v-col cols="12" sm="5">
             <v-card elevation="7">
-              <v-card-title> Choisi un item </v-card-title>
+              <v-card-title> Sélectionner un item </v-card-title>
               <v-card-actions>
                 <v-autocomplete
                   auto-select-first
@@ -18,23 +18,10 @@
                   :search-input.sync="itemRecherche"
                   label="Item"
                   placeholder="Recherche un item"
+                  no-data-text="En attente des données..."
+                  :loading="loading"
                   @click:clear="clearTable"
-                  ><div slot="prepend-item">
-                    <v-dialog v-model="dialog" persitent>
-                      <template v-slot:activator="{ on, attrs }">
-                        <v-btn
-                          text
-                          block
-                          @click="dialog = true"
-                          v-bind="attrs"
-                          v-on="on"
-                        >
-                          Ajouter item
-                        </v-btn>
-                      </template>
-                      <AddItem v-model="dialog" />
-                    </v-dialog></div
-                ></v-autocomplete>
+                  ></v-autocomplete>
               </v-card-actions>
             </v-card>
           </v-col>
@@ -182,13 +169,9 @@
 </template>
 
 <script>
-import AddItem from "@/views/AddItem";
 import PostService from "../PostService";
 
 export default {
-  components: {
-    AddItem,
-  },
   data: () => ({
     dialog: false,
     dialogValidation: false,
@@ -221,6 +204,7 @@ export default {
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
     },
+    loading: true
   }),
   methods: {
     sortPrix(prix) {
@@ -540,6 +524,7 @@ export default {
       this.weapons = await PostService.getAllWeapons();
       this.items = [...this.equipements, ...this.weapons];
       this.items.sort();
+      this.loading = false
       await this.getRunes();
       await this.getCoefs();
       await this.getHistorique();
