@@ -8,32 +8,19 @@
         <v-row justify="center" style="padding-top: 100px">
           <v-col cols="12" sm="5">
             <v-card elevation="7">
-              <v-card-title> Choisi un item </v-card-title>
+              <v-card-title> Sélectionner un item </v-card-title>
               <v-card-actions>
                 <v-autocomplete
-                  auto-select-first
-                  clearable
-                  :items="items"
-                  item-text="name"
-                  :search-input.sync="itemRecherche"
-                  label="Item"
-                  placeholder="Recherche un item"
-                  @click:clear="clearTable"
-                  ><div slot="prepend-item">
-                    <v-dialog v-model="dialog" persitent>
-                      <template v-slot:activator="{ on, attrs }">
-                        <v-btn
-                          text
-                          block
-                          @click="dialog = true"
-                          v-bind="attrs"
-                          v-on="on"
-                        >
-                          Ajouter item
-                        </v-btn>
-                      </template>
-                      <AddItem v-model="dialog" />
-                    </v-dialog></div
+                    auto-select-first
+                    clearable
+                    :items="items"
+                    item-text="name"
+                    :search-input.sync="itemRecherche"
+                    label="Item"
+                    placeholder="Recherche un item"
+                    no-data-text="En attente des données..."
+                    :loading="loading"
+                    @click:clear="clearTable"
                 ></v-autocomplete>
               </v-card-actions>
             </v-card>
@@ -42,33 +29,33 @@
         <v-row style="padding-top: 50px" no-gutters>
           <v-col md="1" offset-md="2">
             <v-img
-              width="125px"
-              height="125px"
-              v-if="imgURL.length >= 3"
-              :src="require(`@/assets/items/${imgURL}`)"
-              class="mx-auto"
+                width="125px"
+                height="125px"
+                v-if="imgURL.length >= 3"
+                :src="require(`@/assets/items/${imgURL}`)"
+                class="mx-auto"
             ></v-img>
           </v-col>
           <v-col md="4" offset-md="1">
             <v-text-field
-              v-model="coef"
-              outlined
-              label="Coefficient"
-              :rules="[reglesCoef.required]"
-              prepend-inner-icon="mdi-percent"
-              append-icon="mdi-content-save"
-              @click:append="updateCoef"
-              v-if="this.isItemRecherche"
+                v-model="coef"
+                outlined
+                label="Coefficient"
+                :rules="[reglesCoef.required]"
+                prepend-inner-icon="mdi-percent"
+                append-icon="mdi-content-save"
+                @click:append="updateCoef"
+                v-if="this.isItemRecherche"
             ></v-text-field>
             <v-snackbar v-model="snackbar">
               Coefficient enregistré !
 
               <template v-slot:action="{ attrs }">
                 <v-btn
-                  color="pink"
-                  text
-                  v-bind="attrs"
-                  @click="snackbar = false"
+                    color="pink"
+                    text
+                    v-bind="attrs"
+                    @click="snackbar = false"
                 >
                   Fermer
                 </v-btn>
@@ -76,10 +63,10 @@
             </v-snackbar>
             <div class="text-center">
               <v-chip
-                class="ma-2"
-                v-if="this.isItemRecherche"
-                color="purple lighten-2"
-                outlined
+                  class="ma-2"
+                  v-if="this.isItemRecherche"
+                  color="purple lighten-2"
+                  outlined
               >
                 <v-icon left> mdi-anvil</v-icon>
                 <strong>{{ dateItem }}</strong>
@@ -91,7 +78,7 @@
           <v-col md="1" offset-md="2">
             <div class="text-center">
               <v-chip label v-if="this.isItemRecherche"
-                >Niveau {{ itemLevel }}</v-chip
+              >Niveau {{ itemLevel }}</v-chip
               >
             </div>
           </v-col>
@@ -99,11 +86,11 @@
         <v-row justify="center">
           <v-col cols="12" sm="8">
             <v-data-table
-              :headers="headers"
-              :items="itemTable"
-              class="elevation-2"
-              disable-pagination
-              :hide-default-footer="true"
+                :headers="headers"
+                :items="itemTable"
+                class="elevation-2"
+                disable-pagination
+                :hide-default-footer="true"
             >
               <template v-slot:item.prixFocus="props">
                 <v-chip :color="sortPrix(props.item.prixFocus)" dark>
@@ -112,9 +99,9 @@
               </template>
               <template v-slot:item.prixUnit="props">
                 <v-edit-dialog
-                  large
-                  persistent
-                  @save="
+                    large
+                    persistent
+                    @save="
                     save({
                       prix: newPrix,
                       caracName: props.item.caracName,
@@ -125,10 +112,10 @@
                   <template v-slot:input>
                     <div class="mt-4 title">Changer le prix de la rune</div>
                     <v-text-field
-                      hint="Nouveau prix"
-                      single-line
-                      autofocus
-                      v-model="newPrix"
+                        hint="Nouveau prix"
+                        single-line
+                        autofocus
+                        v-model="newPrix"
                     ></v-text-field>
                   </template>
                 </v-edit-dialog>
@@ -140,10 +127,10 @@
           <v-dialog v-model="dialogValidation" persistent max-width="600px">
             <template v-slot:activator="{ on, attrs }">
               <v-btn
-                color="blue-grey"
-                class="white--text mx-auto"
-                v-bind="attrs"
-                v-on="on"
+                  color="blue-grey"
+                  class="white--text mx-auto"
+                  v-bind="attrs"
+                  v-on="on"
               >
                 J'ai brisé l'item
                 <v-icon right dark> mdi-database-plus</v-icon>
@@ -163,9 +150,9 @@
               <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn
-                  color="blue darken-1"
-                  text
-                  @click="dialogValidation = false"
+                    color="blue darken-1"
+                    text
+                    @click="dialogValidation = false"
                 >
                   Close
                 </v-btn>
@@ -182,13 +169,9 @@
 </template>
 
 <script>
-import AddItem from "@/views/AddItem";
 import PostService from "../PostService";
 
 export default {
-  components: {
-    AddItem,
-  },
   data: () => ({
     dialog: false,
     dialogValidation: false,
@@ -221,6 +204,7 @@ export default {
     reglesCoef: {
       required: (value) => !!value || "Nécessaire.",
     },
+    loading: true
   }),
   methods: {
     sortPrix(prix) {
@@ -329,8 +313,8 @@ export default {
       let total = 0;
       for (const stat of this.itemTable) {
         total =
-          total +
-          Math.floor(this.quantityNoFocus(stat)) *
+            total +
+            Math.floor(this.quantityNoFocus(stat)) *
             this.getRunePrix(stat.caracName);
       }
     },
@@ -339,8 +323,8 @@ export default {
       let max = 0;
       for (const stat of this.itemTable) {
         max = Math.max(
-          max,
-          Math.floor(this.quantityFocus(stat)) *
+            max,
+            Math.floor(this.quantityFocus(stat)) *
             this.getRunePrix(stat.caracName)
         );
       }
@@ -364,16 +348,16 @@ export default {
 
     quantityNoFocus(stat) {
       return (
-        Math.round(
-          ((((stat.caracValue * this.getUnitWeight(stat.caracName)) /
-            this.getRuneWeight(stat.caracName)) *
-            this.itemLevel *
-            0.025 *
-            this.coef) /
-            100) *
-            0.55 *
-            100
-        ) / 100
+          Math.round(
+              ((((stat.caracValue * this.getUnitWeight(stat.caracName)) /
+                  this.getRuneWeight(stat.caracName)) *
+                  this.itemLevel *
+                  0.025 *
+                  this.coef) /
+                  100) *
+              0.55 *
+              100
+          ) / 100
       );
     },
 
@@ -387,17 +371,17 @@ export default {
 
     quantityFocus(stat) {
       let res =
-        Math.round(
-          ((this.getTotalWeight() +
-            stat.caracValue * this.getUnitWeight(stat.caracName)) /
-            2 /
-            this.getRuneWeight(stat.caracName)) *
-            this.itemLevel *
-            0.025 *
-            (this.coef / 100) *
-            0.55 *
-            100
-        ) / 100;
+          Math.round(
+              ((this.getTotalWeight() +
+                  stat.caracValue * this.getUnitWeight(stat.caracName)) /
+                  2 /
+                  this.getRuneWeight(stat.caracName)) *
+              this.itemLevel *
+              0.025 *
+              (this.coef / 100) *
+              0.55 *
+              100
+          ) / 100;
       if (res - Math.floor(res) < 0.5) {
         return Math.floor(res);
       } else if (((Math.round(res) - res) / res) * 100 >= 2) {
@@ -409,7 +393,7 @@ export default {
 
     setPrix(stat) {
       return Math.round(
-        this.quantityFocus(stat) * this.getRunePrix(stat.caracName)
+          this.quantityFocus(stat) * this.getRunePrix(stat.caracName)
       );
     },
 
@@ -430,7 +414,7 @@ export default {
       let totalSansFocus = 0;
       for (const stat of this.itemTable) {
         totalSansFocus += Math.round(
-          this.getRunePrix(stat.caracName) * this.quantityNoFocus(stat)
+            this.getRunePrix(stat.caracName) * this.quantityNoFocus(stat)
         );
       }
       this.itemTable[this.getItem(this.itemRecherche).statistics.length] = {
@@ -451,15 +435,15 @@ export default {
       this.dialogValidation = false;
       let current = new Date();
       let cDate =
-        ("0" + current.getDate()).slice(-2) +
-        "/" +
-        ("0" + (current.getMonth() + 1)).slice(-2) +
-        "/" +
-        current.getFullYear();
+          ("0" + current.getDate()).slice(-2) +
+          "/" +
+          ("0" + (current.getMonth() + 1)).slice(-2) +
+          "/" +
+          current.getFullYear();
       let cTime =
-        this.minutes_with_leading_zeros(current.getHours()) +
-        ":" +
-        this.minutes_with_leading_zeros(current.getMinutes());
+          this.minutes_with_leading_zeros(current.getHours()) +
+          ":" +
+          this.minutes_with_leading_zeros(current.getMinutes());
       let dateTime = cDate + " " + cTime;
       let focusName;
       let focusPrix;
@@ -540,6 +524,7 @@ export default {
       this.weapons = await PostService.getAllWeapons();
       this.items = [...this.equipements, ...this.weapons];
       this.items.sort();
+      this.loading = false
       await this.getRunes();
       await this.getCoefs();
       await this.getHistorique();

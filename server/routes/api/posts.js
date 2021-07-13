@@ -2,7 +2,7 @@ const express = require("express");
 const { MongoClient } = require("mongodb");
 
 const router = express.Router();
-
+const {apiKey} = require('../../../secret.json')
 // Get Posts
 router.get("/", async (req, res) => {
   let runes = getAllRunes();
@@ -54,8 +54,7 @@ let collectionRunes;
 let collectionItems;
 let collectionHistorique;
 
-const uri =
-  "mongodb+srv://me:c8qqvgK3md@cluster0.cwwme.mongodb.net/dofusBriseur?retryWrites=true&w=majority";
+const uri = apiKey
 const client = new MongoClient(uri, { useUnifiedTopology: true });
 client.connect((err) => {
   const db = client.db("dofusBriseur");
