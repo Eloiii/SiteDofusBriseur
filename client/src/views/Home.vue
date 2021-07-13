@@ -21,7 +21,7 @@
                     no-data-text="En attente des données..."
                     :loading="loading"
                     @click:clear="clearTable"
-                ></v-autocomplete>
+                  ></v-autocomplete>
               </v-card-actions>
             </v-card>
           </v-col>
