@@ -9,39 +9,40 @@
               <v-spacer></v-spacer>
 
               <v-text-field
-                v-model="search"
-                append-icon="mdi-magnify"
-                label="Recherche item"
-                single-line
-                hide-details
+                  v-model="search"
+                  append-icon="mdi-magnify"
+                  label="Recherche item"
+                  single-line
+                  hide-details
               ></v-text-field>
             </v-card-title>
             <v-data-table
-              :headers="headers"
-              :items="itemTable"
-              class="elevation-2"
-              :items-per-page="20"
-              :search="search"
-              :options.sync="options"
-              :loading="loading"
-              :sort-by.sync="sortBy"
-              :sort-desc.sync="sortDesc"
-              ><template v-slot:body.append>
+                :headers="headers"
+                :items="itemTable"
+                class="elevation-2"
+                :items-per-page="20"
+                :search="search"
+                :options.sync="options"
+                :loading="loading"
+                :sort-by.sync="sortBy"
+                :sort-desc.sync="sortDesc"
+            >
+              <template v-slot:body.append>
                 <tr>
                   <td></td>
                   <td>
                     <v-select
-                      :items="itemsType"
-                      v-model="itemType"
-                      label="Type de l'item"
-                      :value="Tout"
+                        :items="itemsType"
+                        v-model="itemType"
+                        label="Type de l'item"
+                        :value="'Tout'"
                     ></v-select>
                   </td>
                   <td>
                     <v-text-field
-                      v-model="itemLevel"
-                      label="Level minimum"
-                      max-width="25px"
+                        v-model="itemLevel"
+                        label="Level minimum"
+                        max-width="25px"
                     ></v-text-field>
                   </td>
 
@@ -50,8 +51,8 @@
               </template>
               <template v-slot:item.rentable="{ item }">
                 <v-simple-checkbox
-                  v-model="item.rentable"
-                  disabled
+                    v-model="item.rentable"
+                    disabled
                 ></v-simple-checkbox>
               </template>
             </v-data-table>
@@ -63,6 +64,7 @@
 </template>
 <script>
 import PostService from "../PostService";
+
 export default {
   data: () => ({
     sortBy: "date",
@@ -96,7 +98,7 @@ export default {
   computed: {
     headers() {
       return [
-        { text: "Nom", value: "item" },
+        {text: "Nom", value: "item"},
         {
           text: "Type",
           value: "type",
@@ -112,11 +114,24 @@ export default {
             return value >= parseInt(this.itemLevel);
           },
         },
-        { text: "Date", value: "date" },
-        { text: "Coef.", value: "coef" },
-        { text: "Focus ?", value: "focus" },
-        { text: "Prix", value: "prix" },
-        { text: "Rentable ?", value: "rentable" },
+        {
+          text: "Date", value: "date", sortable: true, sort: (a, b) => {
+            const datePartsA = a.split("/");
+            const yearA = datePartsA[2].split(' ')[0]
+            const timeA = datePartsA[2].split(' ')[1].split(':')
+            const dateObjectA = new Date(+yearA, datePartsA[1] - 1, +datePartsA[0], timeA[0], timeA[1]);
+            const datePartsB = b.split("/");
+            const yearB = datePartsB[2].split(' ')[0]
+            const timeB = datePartsB[2].split(' ')[1].split(':')
+            const dateObjectB = new Date(+yearB, datePartsB[1] - 1, +datePartsB[0], timeB[0], timeB[1])
+
+            return dateObjectA - dateObjectB
+          }
+        },
+        {text: "Coef.", value: "coef"},
+        {text: "Focus ?", value: "focus"},
+        {text: "Prix", value: "prix"},
+        {text: "Rentable ?", value: "rentable"},
       ];
     },
   },
