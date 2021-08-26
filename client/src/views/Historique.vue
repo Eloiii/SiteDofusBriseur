@@ -1,65 +1,75 @@
 <template>
   <v-app>
-    <v-main>
-      <v-row justify="center" style="padding-top: 50px">
-        <v-col cols="12" sm="10">
-          <v-card>
-            <v-card-title>
-              Historique des brisages
-              <v-spacer></v-spacer>
+    <v-container class="mt-10">
+      <v-row
+        justify="center"
+      >
+        <v-card width="90%">
+          <v-card-title>
+            Historique des brisages
 
-              <v-text-field
-                  v-model="search"
-                  append-icon="mdi-magnify"
-                  label="Recherche item"
-                  single-line
-                  hide-details
-              ></v-text-field>
-            </v-card-title>
-            <v-data-table
-                :headers="headers"
-                :items="itemTable"
-                class="elevation-2"
-                :items-per-page="20"
-                :search="search"
-                :options.sync="options"
-                :loading="loading"
-                :sort-by.sync="sortBy"
-                :sort-desc.sync="sortDesc"
-            >
-              <template v-slot:body.append>
-                <tr>
-                  <td></td>
-                  <td>
-                    <v-select
-                        :items="itemsType"
-                        v-model="itemType"
-                        label="Type de l'item"
-                        :value="'Tout'"
-                    ></v-select>
-                  </td>
-                  <td>
-                    <v-text-field
-                        v-model="itemLevel"
-                        label="Level minimum"
-                        max-width="25px"
-                    ></v-text-field>
-                  </td>
+            <v-spacer />
+            <v-switch
+              v-model="switchName"
+              inset
+              label="Ne voir que mes brisages"
+            />
+            <v-spacer />
 
-                  <td colspan="5"></td>
-                </tr>
-              </template>
-              <template v-slot:item.rentable="{ item }">
-                <v-simple-checkbox
-                    v-model="item.rentable"
-                    disabled
-                ></v-simple-checkbox>
-              </template>
-            </v-data-table>
-          </v-card>
-        </v-col>
+            <v-text-field
+              v-model="search"
+              append-icon="mdi-magnify"
+              hide-details
+              label="Recherche item"
+              single-line
+            />
+          </v-card-title>
+          <v-data-table
+            :headers="headers"
+            :items="itemTable"
+            :items-per-page="12"
+            :loading="loading"
+            :options.sync="options"
+            :search="search"
+            :sort-by.sync="sortBy"
+            :sort-desc.sync="sortDesc"
+          >
+            <template v-slot:body.append>
+              <tr>
+                <td />
+                <td>
+                  <v-select
+                    v-model="itemType"
+                    :items="itemsType"
+                    :value="'Tout'"
+                    label="Type de l'item"
+                  />
+                </td>
+                <td>
+                  <v-text-field
+                    v-model="itemLevel"
+                    label="Level minimum"
+                    max-width="25px"
+                    type="number"
+                  />
+                </td>
+
+                <td colspan="5" />
+              </tr>
+            </template>
+            <template v-slot:item.rentable="{ item }">
+              <v-simple-checkbox
+                v-model="item.rentable"
+                disabled
+              />
+            </template>
+            <template v-slot:item.prix="{ item }">
+              {{ new Intl.NumberFormat('fr-FR').format(item.prix) }}
+            </template>
+          </v-data-table>
+        </v-card>
       </v-row>
-    </v-main>
+    </v-container>
   </v-app>
 </template>
 <script>
@@ -70,10 +80,11 @@ export default {
     sortBy: "date",
     sortDesc: true,
     options: {},
+    items: [],
     itemLevel: 0,
     itemType: "Tout",
     search: "",
-    itemTable: [],
+    switchName: false,
     itemsType: [
       "Tout",
       "Amulette",
@@ -132,8 +143,12 @@ export default {
         {text: "Focus ?", value: "focus"},
         {text: "Prix", value: "prix"},
         {text: "Rentable ?", value: "rentable"},
+        {text: 'Who', value: 'who', align: ' d-none'}
       ];
     },
+    itemTable() {
+      return this.switchName ? this.items.filter(item => item.who === localStorage.getItem('logged')) : this.items
+    }
   },
   watch: {
     options: {
@@ -143,14 +158,19 @@ export default {
       deep: true,
     },
   },
+  created() {
+    if (Object.keys(this.$route.params).length > 0) {
+      this.search = this.$route.params.item
+    }
+  },
   methods: {
     getHistorique() {
       this.loading = true;
       PostService.getHistorique().then((result) => {
-        this.itemTable = result;
+        this.items = result;
         this.loading = false;
       });
     },
-  },
+  }
 };
 </script>
