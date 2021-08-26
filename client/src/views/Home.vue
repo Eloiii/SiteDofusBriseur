@@ -1,170 +1,227 @@
 <template>
   <v-app>
-    <v-main>
-      <v-container fluid>
-        <v-row align="center" justify="center" style="padding-top: 30px">
-          <h1 class="display-3">Calculateur brisage Dofus</h1>
-        </v-row>
-        <v-row justify="center" style="padding-top: 100px">
-          <v-col cols="12" sm="5">
-            <v-card elevation="7">
-              <v-card-title> Sélectionner un item </v-card-title>
-              <v-card-actions>
-                <v-autocomplete
-                    auto-select-first
-                    clearable
-                    :items="items"
-                    item-text="name"
-                    :search-input.sync="itemRecherche"
-                    label="Item"
-                    placeholder="Recherche un item"
-                    no-data-text="En attente des données..."
-                    :loading="loading"
-                    @click:clear="clearTable"
-                  ></v-autocomplete>
-              </v-card-actions>
-            </v-card>
-          </v-col>
-        </v-row>
-        <v-row style="padding-top: 50px" no-gutters>
-          <v-col md="1" offset-md="2">
-            <v-img
-                width="125px"
-                height="125px"
-                v-if="imgURL.length >= 3"
-                :src="require(`@/assets/items/${imgURL}`)"
-                class="mx-auto"
-            ></v-img>
-          </v-col>
-          <v-col md="4" offset-md="1">
-            <v-text-field
-                v-model="coef"
-                outlined
-                label="Coefficient"
-                :rules="[reglesCoef.required]"
-                prepend-inner-icon="mdi-percent"
-                append-icon="mdi-content-save"
-                @click:append="updateCoef"
-                v-if="this.isItemRecherche"
-            ></v-text-field>
-            <v-snackbar v-model="snackbar">
-              Coefficient enregistré !
+    <v-container class="mt-10">
+      <v-row
+        align="center"
+        justify="center"
+      >
+        <h1 class="display-3">
+          Calculateur brisage Dofus
+        </h1>
+      </v-row>
+      <v-row
+        justify="center"
+        style="padding-top: 100px"
+      >
+        <v-col
+          cols="12"
+          sm="5"
+        >
+          <v-card elevation="7">
+            <v-card-title> Sélectionner un item</v-card-title>
+            <v-card-actions>
+              <v-autocomplete
+                :items="items"
+                :loading="loading"
+                :search-input.sync="itemRecherche"
+                auto-select-first
+                cache-items
+                clearable
+                item-text="name"
+                label="Item"
+                no-data-text="En attente des données..."
+                placeholder="Recherche un item"
+                @click:clear="clearTable"
+              />
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+      <v-row
+        no-gutters
+        style="padding-top: 50px"
+      >
+        <v-col
+          md="1"
+          offset-md="2"
+        >
+          <v-img
+            v-if="imgURL.length >= 3"
+            :src="require(`@/assets/items/${imgURL}`)"
+            class="mx-auto"
+            height="125px"
+            width="125px"
+          />
+        </v-col>
+        <v-col
+          md="4"
+          offset-md="1"
+        >
+          <v-text-field
+            v-if="isItemRecherche"
+            v-model="coef"
+            :rules="[reglesCoef.required]"
+            append-icon="mdi-content-save"
+            label="Coefficient"
+            outlined
+            prepend-inner-icon="mdi-percent"
+            type="number"
+            @click:append="updateCoef"
+          />
+          <v-snackbar v-model="snackbar">
+            Coefficient enregistré !
 
-              <template v-slot:action="{ attrs }">
-                <v-btn
-                    color="pink"
-                    text
-                    v-bind="attrs"
-                    @click="snackbar = false"
-                >
-                  Fermer
-                </v-btn>
-              </template>
-            </v-snackbar>
-            <div class="text-center">
-              <v-chip
-                  class="ma-2"
-                  v-if="this.isItemRecherche"
-                  color="purple lighten-2"
-                  outlined
-              >
-                <v-icon left> mdi-anvil</v-icon>
-                <strong>{{ dateItem }}</strong>
-              </v-chip>
-            </div>
-          </v-col>
-        </v-row>
-        <v-row no-gutters>
-          <v-col md="1" offset-md="2">
-            <div class="text-center">
-              <v-chip label v-if="this.isItemRecherche"
-              >Niveau {{ itemLevel }}</v-chip
-              >
-            </div>
-          </v-col>
-        </v-row>
-        <v-row justify="center">
-          <v-col cols="12" sm="8">
-            <v-data-table
-                :headers="headers"
-                :items="itemTable"
-                class="elevation-2"
-                disable-pagination
-                :hide-default-footer="true"
-            >
-              <template v-slot:item.prixFocus="props">
-                <v-chip :color="sortPrix(props.item.prixFocus)" dark>
-                  {{ props.item.prixFocus }}
-                </v-chip>
-              </template>
-              <template v-slot:item.prixUnit="props">
-                <v-edit-dialog
-                    large
-                    persistent
-                    @save="
-                    save({
-                      prix: newPrix,
-                      caracName: props.item.caracName,
-                    })
-                  "
-                >
-                  <div>{{ props.item.prixUnit }}</div>
-                  <template v-slot:input>
-                    <div class="mt-4 title">Changer le prix de la rune</div>
-                    <v-text-field
-                        hint="Nouveau prix"
-                        single-line
-                        autofocus
-                        v-model="newPrix"
-                    ></v-text-field>
-                  </template>
-                </v-edit-dialog>
-              </template>
-            </v-data-table>
-          </v-col>
-        </v-row>
-        <v-row justify="space-around" style="padding-top: 50px">
-          <v-dialog v-model="dialogValidation" persistent max-width="600px">
-            <template v-slot:activator="{ on, attrs }">
+            <template v-slot:action="{ attrs }">
               <v-btn
-                  color="blue-grey"
-                  class="white--text mx-auto"
-                  v-bind="attrs"
-                  v-on="on"
+                color="deep-purple accent-4"
+                text
+                v-bind="attrs"
+                @click="snackbar = false"
               >
-                J'ai brisé l'item
-                <v-icon right dark> mdi-database-plus</v-icon>
+                Fermer
               </v-btn>
             </template>
-            <v-card>
-              <v-card-title>
-                <span class="headline">Le brisage a-t-il été rentable ?</span>
-              </v-card-title>
-              <v-card-text>
-                <v-checkbox v-model="isRentable">
-                  <template v-slot:label>
-                    <div>Le brisage a été rentable.</div>
-                  </template>
-                </v-checkbox></v-card-text
+          </v-snackbar>
+          <div class="text-center">
+            <v-chip
+              v-if="isItemRecherche"
+              class="ma-2"
+              color="deep-purple accent-4"
+              outlined
+              @click="goToLastBrisage"
+            >
+              <v-icon left>
+                mdi-anvil
+              </v-icon>
+              <strong>{{ dateItem }}</strong>
+            </v-chip>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row no-gutters>
+        <v-col
+          md="1"
+          offset-md="2"
+        >
+          <div class="text-center">
+            <v-chip
+              v-if="isItemRecherche"
+              label
+            >
+              Niveau {{ itemLevel }}
+            </v-chip>
+          </div>
+        </v-col>
+      </v-row>
+      <v-row justify="center">
+        <v-col
+          cols="12"
+          sm="8"
+        >
+          <v-data-table
+            :headers="headers"
+            :hide-default-footer="true"
+            :items="itemTable"
+            class="elevation-2"
+            disable-pagination
+            no-data-text="Sélectionne un item pour voir ses caractéristiques"
+          >
+            <template v-slot:item.prixFocus="props">
+              <v-chip
+                :color="sortPrix(props.item.prixFocus)"
+                dark
               >
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                    color="blue darken-1"
-                    text
-                    @click="dialogValidation = false"
-                >
-                  Close
-                </v-btn>
-                <v-btn color="blue darken-1" text @click="addHistorique">
-                  Envoyer
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-        </v-row>
-      </v-container>
-    </v-main>
+                {{ props.item.prixFocus }}
+              </v-chip>
+            </template>
+            <template v-slot:item.prixUnit="props">
+              <v-edit-dialog
+                large
+                persistent
+                @save="
+                  save({
+                    prix: newPrix,
+                    caracName: props.item.caracName,
+                  })
+                "
+              >
+                <div>{{ props.item.prixUnit }}</div>
+                <template v-slot:input>
+                  <div class="mt-4 title">
+                    Changer le prix de la rune
+                  </div>
+                  <v-text-field
+                    v-model="newPrix"
+                    :rules="[numberRule.number]"
+                    autofocus
+                    hint="Nouveau prix"
+                    single-line
+                    type="number"
+                  />
+                </template>
+              </v-edit-dialog>
+            </template>
+          </v-data-table>
+        </v-col>
+      </v-row>
+      <v-row
+        justify="space-around"
+        style="padding-top: 50px"
+      >
+        <v-dialog
+          v-model="dialogValidation"
+          max-width="600px"
+          persistent
+        >
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn
+              class="mx-auto"
+              color="deep-purple accent-4"
+              dark
+              v-bind="attrs"
+              v-on="on"
+            >
+              J'ai brisé l'item
+              <v-icon
+                dark
+                right
+              >
+                mdi-database-plus
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-card>
+            <v-card-title>
+              <span class="headline">Le brisage a-t-il été rentable ?</span>
+            </v-card-title>
+            <v-card-actions>
+              <v-btn
+                color="grey"
+                text
+                @click="dialogValidation = false"
+              >
+                Annuler
+              </v-btn>
+              <v-spacer />
+              <v-btn
+                color="red"
+                text
+                @click="addHistorique(false)"
+              >
+                Non
+              </v-btn>
+              <v-btn
+                color="deep-purple accent-4"
+                text
+                @click="addHistorique(true)"
+              >
+                Oui
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
+    </v-container>
   </v-app>
 </template>
 
@@ -177,12 +234,12 @@ export default {
     dialogValidation: false,
     itemRecherche: "",
     headers: [
-      { text: "Caractéristique", value: "caracName" },
-      { text: "Valeur", value: "caracValue" },
-      { text: "Prix unitaire", value: "prixUnit" },
-      { text: "Quantité (Focus)", value: "qtFocus" },
-      { text: "Prix (Focus)", value: "prixFocus" },
-      { text: "Aucun Focus", value: "qtNoFocus" },
+      {text: "Caractéristique", value: "caracName"},
+      {text: "Valeur", value: "caracValue"},
+      {text: "Prix unitaire", value: "prixUnit"},
+      {text: "Quantité (Focus)", value: "qtFocus"},
+      {text: "Prix (Focus)", value: "prixFocus"},
+      {text: "Aucun Focus", value: "qtNoFocus"},
     ],
     itemTable: [],
     items: [],
@@ -200,13 +257,54 @@ export default {
     historique: [],
     dateItem: "",
     itemType: "",
-    isRentable: false,
     reglesCoef: {
-      required: (value) => !!value || "Nécessaire.",
+      required: (value) => !!value || "Nécessaire et numérique",
     },
-    loading: true
+    loading: true,
+    numberRule: {
+      number: value => this.isANumber(value) || 'Valeur numérique uniquement'
+    }
   }),
+  watch: {
+    coef(val) {
+      if (val.length > 0) {
+        this.coef = parseInt(val);
+        this.displayItemStats(this.getItem(this.itemRecherche));
+      }
+    },
+    itemRecherche(val) {
+      let item = this.getItem(val);
+      if (item !== undefined) {
+        this.isItemRecherche = true;
+        this.setCoef(item.name);
+        this.itemLevel = item.level;
+        this.itemType = item.type;
+        this.displayItemStats(item);
+        this.setDateItem();
+        this.setImageURL(item);
+      } else {
+        this.clearTable();
+      }
+    },
+  },
+  async created() {
+    try {
+      this.equipements = await PostService.getAllEquipments();
+      this.weapons = await PostService.getAllWeapons();
+      this.items = [...this.equipements, ...this.weapons];
+      this.items.sort();
+      this.loading = false
+      await this.getRunes();
+      await this.getCoefs();
+      await this.getHistorique();
+    } catch (err) {
+      console.log(err);
+    }
+  },
   methods: {
+    isANumber(number) {
+      return Number.isInteger(Number(number)) && Number(number) > 0
+    },
     sortPrix(prix) {
       if (prix >= this.maxPrix) {
         this.maxPrix = prix;
@@ -221,17 +319,19 @@ export default {
       this.dateItem = "";
       this.imgURL = "";
     },
-    save({ caracName, prix }) {
-      PostService.insertRune({
-        carac: caracName,
-        prix: parseInt(prix),
-      }).then(() => {
-        this.getRunes().then(() => {
-          this.maxPrix = -5;
-          this.displayItemStats(this.getItem(this.itemRecherche));
-          this.newPrix = "";
+    save({caracName, prix}) {
+      if (this.isANumber(prix)) {
+        PostService.insertRune({
+          carac: caracName,
+          prix: parseInt(prix),
+        }).then(() => {
+          this.getRunes().then(() => {
+            this.maxPrix = -5;
+            this.displayItemStats(this.getItem(this.itemRecherche));
+            this.newPrix = "";
+          });
         });
-      });
+      }
     },
     async getRunes() {
       try {
@@ -297,16 +397,18 @@ export default {
     },
 
     updateCoef() {
-      PostService.updateCoef({
-        nom: this.itemRecherche,
-        coef: parseInt(this.coef),
-      }).then(() => {
-        this.getCoefs().then(() => {
-          this.snackbar = true;
-          this.displayItemStats(this.getItem(this.itemRecherche));
-          this.calculateNoFocusPrice();
+      if (this.isANumber(this.coef)) {
+        PostService.updateCoef({
+          nom: this.itemRecherche,
+          coef: parseInt(this.coef),
+        }).then(() => {
+          this.getCoefs().then(() => {
+            this.snackbar = true;
+            this.displayItemStats(this.getItem(this.itemRecherche));
+            this.calculateNoFocusPrice();
+          });
         });
-      });
+      }
     },
 
     calculateNoFocusPrice() {
@@ -350,10 +452,10 @@ export default {
       return (
           Math.round(
               ((((stat.caracValue * this.getUnitWeight(stat.caracName)) /
-                  this.getRuneWeight(stat.caracName)) *
-                  this.itemLevel *
-                  0.025 *
-                  this.coef) /
+                          this.getRuneWeight(stat.caracName)) *
+                      this.itemLevel *
+                      0.025 *
+                      this.coef) /
                   100) *
               0.55 *
               100
@@ -373,7 +475,7 @@ export default {
       let res =
           Math.round(
               ((this.getTotalWeight() +
-                  stat.caracValue * this.getUnitWeight(stat.caracName)) /
+                      stat.caracValue * this.getUnitWeight(stat.caracName)) /
                   2 /
                   this.getRuneWeight(stat.caracName)) *
               this.itemLevel *
@@ -431,7 +533,7 @@ export default {
       return (min < 10 ? "0" : "") + min;
     },
 
-    async addHistorique() {
+    async addHistorique(isRentable) {
       this.dialogValidation = false;
       let current = new Date();
       let cDate =
@@ -464,14 +566,15 @@ export default {
         coef: this.coef,
         focus: focusName,
         prix: focusPrix,
-        rentable: this.isRentable,
+        rentable: isRentable,
         img: this.imgUrl,
+        who: localStorage.getItem('logged')
       };
-
+      this.updateCoef()
       PostService.addHistorique(res).then(() => {
         this.getHistorique();
       });
-      this.isRentable = false;
+
     },
     async getHistorique() {
       try {
@@ -487,50 +590,19 @@ export default {
         }
       }
       if (this.dateItem === "") {
-        this.dateItem = "Pas d'ancien craft";
+        this.dateItem = "Pas d'ancien brisage";
       }
     },
-
     setImageURL(item) {
       let url = item.imgUrl;
       this.imgURL = url.substr(68);
     },
-  },
-  watch: {
-    coef(val) {
-      if (val.length > 0) {
-        this.coef = parseInt(val);
-        this.displayItemStats(this.getItem(this.itemRecherche));
+    goToLastBrisage() {
+      if (this.dateItem !== 'Pas d\'ancien brisage') {
+        this.$router.push({name: 'Historique', params: {item: this.itemRecherche}})
       }
-    },
-    itemRecherche(val) {
-      let item = this.getItem(val);
-      if (item !== undefined) {
-        this.isItemRecherche = true;
-        this.setCoef(item.name);
-        this.itemLevel = item.level;
-        this.itemType = item.type;
-        this.displayItemStats(item);
-        this.setDateItem();
-        this.setImageURL(item);
-      } else {
-        this.clearTable();
-      }
-    },
-  },
-  async created() {
-    try {
-      this.equipements = await PostService.getAllEquipments();
-      this.weapons = await PostService.getAllWeapons();
-      this.items = [...this.equipements, ...this.weapons];
-      this.items.sort();
-      this.loading = false
-      await this.getRunes();
-      await this.getCoefs();
-      await this.getHistorique();
-    } catch (err) {
-      console.log(err);
     }
   },
 };
 </script>
+
