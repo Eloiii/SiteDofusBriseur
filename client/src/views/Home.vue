@@ -5,41 +5,39 @@
         align="center"
         justify="center"
       >
-        <h1 class="display-3">
+        <h1 class="display-3 text-center">
           Calculateur brisage Dofus
         </h1>
       </v-row>
       <v-row
+        class="mt-16"
         justify="center"
-        style="padding-top: 100px"
       >
-        <v-col
-          cols="12"
-          sm="5"
+        <v-card
+          elevation="7"
+          width="35vmax"
         >
-          <v-card elevation="7">
-            <v-card-title> Sélectionner un item</v-card-title>
-            <v-card-actions>
-              <v-autocomplete
-                :items="items"
-                :loading="loading"
-                :search-input.sync="itemRecherche"
-                auto-select-first
-                cache-items
-                clearable
-                item-text="name"
-                label="Item"
-                no-data-text="En attente des données..."
-                placeholder="Recherche un item"
-                @click:clear="clearTable"
-              />
-            </v-card-actions>
-          </v-card>
-        </v-col>
+          <v-card-title>Sélectionner un item</v-card-title>
+          <v-card-actions>
+            <v-autocomplete
+              :items="items"
+              :loading="loading"
+              :search-input.sync="itemRecherche"
+              auto-select-first
+              cache-items
+              clearable
+              item-text="name"
+              label="Item"
+              no-data-text="En attente des données..."
+              placeholder="Recherche un item"
+              @click:clear="clearTable"
+            />
+          </v-card-actions>
+        </v-card>
       </v-row>
       <v-row
+        class="mt-16"
         no-gutters
-        style="padding-top: 50px"
       >
         <v-col
           md="1"
@@ -98,7 +96,9 @@
           </div>
         </v-col>
       </v-row>
-      <v-row no-gutters>
+      <v-row
+        no-gutters
+      >
         <v-col
           md="1"
           offset-md="2"
@@ -152,7 +152,7 @@
                   </div>
                   <v-text-field
                     v-model="newPrix"
-                    :rules="[numberRule.number]"
+                    :rules="[numberRule]"
                     autofocus
                     hint="Nouveau prix"
                     single-line
@@ -165,8 +165,8 @@
         </v-col>
       </v-row>
       <v-row
+        class="mt-16"
         justify="space-around"
-        style="padding-top: 50px"
       >
         <v-dialog
           v-model="dialogValidation"
@@ -261,9 +261,7 @@ export default {
       required: (value) => !!value || "Nécessaire et numérique",
     },
     loading: true,
-    numberRule: {
-      number: value => this.isANumber(value) || 'Valeur numérique uniquement'
-    }
+    numberRule: value => Number.isInteger(Number(value)) && Number(value) > 0 || 'Valeur numérique uniquement'
   }),
   watch: {
     coef(val) {
@@ -289,21 +287,36 @@ export default {
   },
   async created() {
     try {
-      this.equipements = await PostService.getAllEquipments();
-      this.weapons = await PostService.getAllWeapons();
-      this.items = [...this.equipements, ...this.weapons];
+      if (sessionStorage.getItem('items')) {
+        this.items = JSON.parse(sessionStorage.getItem('items'))
+      } else {
+        this.equipements = await PostService.getAllEquipments();
+        this.weapons = await PostService.getAllWeapons();
+        this.items = [...this.filterItems(this.equipements), ...this.filterItems(this.weapons)];
+        sessionStorage.setItem('items', JSON.stringify(this.items))
+      }
       this.items.sort();
       this.loading = false
       await this.getRunes();
       await this.getCoefs();
       await this.getHistorique();
+
     } catch (err) {
       console.log(err);
     }
   },
   methods: {
+    filterItems(items) {
+      return items.map(o => ['imgUrl', 'level', 'name', 'statistics', 'type'].reduce((acc, curr) => {
+        acc[curr] = o[curr];
+        return acc;
+      }, {}))
+    },
     isANumber(number) {
-      return Number.isInteger(Number(number)) && Number(number) > 0
+      if (number !== undefined && number !== null) {
+        return Number.isInteger(Number(number)) && Number(number) > 0
+      }
+      return false
     },
     sortPrix(prix) {
       if (prix >= this.maxPrix) {
@@ -567,7 +580,7 @@ export default {
         focus: focusName,
         prix: focusPrix,
         rentable: isRentable,
-        img: this.imgUrl,
+        img: this.imgURL,
         who: localStorage.getItem('logged')
       };
       this.updateCoef()

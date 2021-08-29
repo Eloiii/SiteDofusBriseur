@@ -34,28 +34,23 @@
             :sort-by.sync="sortBy"
             :sort-desc.sync="sortDesc"
           >
-            <template v-slot:body.append>
-              <tr>
-                <td />
-                <td>
-                  <v-select
-                    v-model="itemType"
-                    :items="itemsType"
-                    :value="'Tout'"
-                    label="Type de l'item"
-                  />
-                </td>
-                <td>
-                  <v-text-field
-                    v-model="itemLevel"
-                    label="Level minimum"
-                    max-width="25px"
-                    type="number"
-                  />
-                </td>
-
-                <td colspan="5" />
-              </tr>
+            <template v-slot:header.type>
+              <v-select
+                v-model="itemType"
+                :items="itemsType"
+                :value="'Tout'"
+                label="Type de l'item"
+              />
+            </template>
+            <template v-slot:header.level>
+              <v-text-field
+                v-model="itemLevel"
+                clearable
+                label="Level minimum"
+                max-width="25px"
+                type="number"
+                @click:clear="resetItemLevel"
+              />
             </template>
             <template v-slot:item.rentable="{ item }">
               <v-simple-checkbox
@@ -65,6 +60,20 @@
             </template>
             <template v-slot:item.prix="{ item }">
               {{ new Intl.NumberFormat('fr-FR').format(item.prix) }}
+            </template>
+            <template v-slot:item.item="{ item }">
+              <div class="nameIcon">
+                <span>
+                  {{ item.item }}
+                </span>
+                <v-img
+                  v-if="item.img"
+                  :src="require(`../assets/items/${item.img}`)"
+                  contain
+                  height="50px"
+                  width="50px"
+                />
+              </div>
             </template>
           </v-data-table>
         </v-card>
@@ -117,6 +126,7 @@ export default {
             if (this.itemType === "Tout") return true;
             return value === this.itemType;
           },
+          sortable: false
         },
         {
           text: "Level",
@@ -124,6 +134,7 @@ export default {
           filter: (value) => {
             return value >= parseInt(this.itemLevel);
           },
+          sortable: false
         },
         {
           text: "Date", value: "date", sortable: true, sort: (a, b) => {
@@ -171,6 +182,18 @@ export default {
         this.loading = false;
       });
     },
+    resetItemLevel(event) {
+      event.preventDefault()
+      setTimeout(() => this.itemLevel = 0, 10)
+    }
   }
 };
 </script>
+<style>
+.nameIcon {
+  display: flex;
+  text-align: center;
+  justify-content: space-between;
+  align-items: center;
+}
+</style>
