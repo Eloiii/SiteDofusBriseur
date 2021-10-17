@@ -70,6 +70,10 @@ export default {
           this.snackBarMessage = "Il manque des informations à compléter"
           this.snackBarColor = "red lighten-1"
           break
+        case 'validationError':
+          this.snackBarMessage = "Erreur lors de la validation"
+          this.snackBarColor = "red lighten-1"
+          break
 
       }
       this.snackbar = true

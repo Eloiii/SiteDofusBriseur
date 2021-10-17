@@ -128,30 +128,33 @@ export default {
   },
   methods: {
     async register() {
-      this.$refs.form.validate()
       const self = this
-      if (this.password !== this.passwordValidation) {
-        this.$emit('snackBar', 'passwordNoMatch')
+      if (!this.$refs.form.validate()) {
+        this.$emit('snackBar', 'validationError')
       } else {
-        const testUserName = await PostService.getUser(this.login)
-        if (testUserName !== '') {
-          console.log(testUserName)
-          this.$emit('snackBar', 'nameAlreadyExists')
+        if (this.password !== this.passwordValidation) {
+          this.$emit('snackBar', 'passwordNoMatch')
         } else {
-          await bcrypt.genSalt(10, function (err, salt) {
-            bcrypt.hash(self.password, salt, function (err, hash) {
-              const data = {
-                nom: self.login,
-                password: hash,
-                color: `rgba(${self.color.rgba.r},${self.color.rgba.g},${self.color.rgba.b},${self.color.rgba.a})`,
-                avatar: self.imageLink,
-              }
-              self.$emit('snackBar', 'successRegister')
-              PostService.registerNewAccount(data).then(() => {
-                self.$emit('back')
-              })
+          const testUserName = await PostService.getUser(this.login)
+          if (testUserName !== '') {
+            console.log(testUserName)
+            this.$emit('snackBar', 'nameAlreadyExists')
+          } else {
+            await bcrypt.genSalt(10, function (err, salt) {
+              bcrypt.hash(self.password, salt, function (err, hash) {
+                const data = {
+                  nom: self.login,
+                  password: hash,
+                  color: `rgba(${self.color.rgba.r},${self.color.rgba.g},${self.color.rgba.b},${self.color.rgba.a})`,
+                  avatar: self.imageLink,
+                }
+                self.$emit('snackBar', 'successRegister')
+                PostService.registerNewAccount(data).then(() => {
+                  self.$emit('back')
+                })
+              });
             });
-          });
+          }
         }
       }
     }
