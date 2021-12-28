@@ -128,7 +128,9 @@
           >
             <template v-slot:item.prixFocus="props">
               <v-chip
+                :disabled="Nan(props.item.prixFocus)"
                 :color="sortPrix(props.item.prixFocus)"
+                @click="addHistory(props.item.caracName, props.item.prixFocus)"
               >
                 {{ props.item.prixFocus }}
               </v-chip>
@@ -161,6 +163,15 @@
               </v-edit-dialog>
             </template>
           </v-data-table>
+          <v-alert
+            class="mt-16"
+            color="deep-purple accent-4"
+            type="info"
+            text
+            outlined
+          >
+            Clique sur une bulle grise ou verte dans la colonne des revenus pour enregistrer un nouveau brisage
+          </v-alert>
         </v-col>
       </v-row>
       <v-row
@@ -172,37 +183,10 @@
           max-width="600px"
           persistent
         >
-          <template v-slot:activator="{ on, attrs }">
-            <v-btn
-              :dark="isItemRecherche"
-              :disabled="!isItemRecherche"
-              class="mx-auto"
-              color="deep-purple accent-4"
-              v-bind="attrs"
-              v-on="on"
-            >
-              Je viens de briser cet item
-              <v-icon
-                dark
-                right
-              >
-                mdi-database-plus
-              </v-icon>
-            </v-btn>
-          </template>
           <v-card>
             <v-card-title>
               <span class="headline">Le brisage a-t-il été rentable ?</span>
             </v-card-title>
-            <v-card-text class="mt-7">
-              <v-select 
-                v-model="focusConfirmation"
-                :items="getItemStatsNames()"
-                clearable
-                outlined
-                label="Focus choisi"
-              />
-            </v-card-text>
             <v-card-actions>
               <v-btn
                 color="grey"
@@ -267,6 +251,8 @@ export default {
     dateItem: "",
     itemType: "",
     focusConfirmation: "",
+    selectedCarac: "",
+    selectedPrice: "",
     reglesCoef: {
       required: (value) => !!value || "Nécessaire et numérique",
     },
@@ -316,6 +302,9 @@ export default {
     }
   },
   methods: {
+    Nan(price) {
+      return isNaN(price)
+    },
     filterItems(items) {
       return items.map(o => ['imgUrl', 'level', 'name', 'statistics', 'type'].reduce((acc, curr) => {
         acc[curr] = o[curr];
@@ -341,27 +330,6 @@ export default {
       this.maxPrix = -5;
       this.dateItem = "";
       this.imgURL = "";
-    },
-
-    getItemStatsNames() {
-      if (!this.isItemRecherche)
-        return
-      let res = []
-      for (const stat of this.getItem(this.itemRecherche).statistics) {
-        let readableStat = Object.keys(stat);
-        let nomStat = readableStat[0];
-        let caracValue = Math.round((stat[nomStat].min + stat[nomStat].max) / 2);
-        if (caracValue >= 0 && !nomStat.startsWith("(")) {
-          res.push(nomStat)
-        }
-      }
-      console.log("oui")
-      for(const stat of this.itemTable) {
-        if (stat.prixFocus === this.maxPrix)
-          this.focusConfirmation = stat.caracName
-      }
-      res.push("SANS FOCUS")
-      return res;
     },
 
     save({caracName, prix}) {
@@ -592,38 +560,29 @@ export default {
           ":" +
           this.minutes_with_leading_zeros(current.getMinutes());
       let dateTime = cDate + " " + cTime;
-      let focusPrix;
-      let focusName = this.focusConfirmation
-      if(focusName === "")
-        return
-      for (const stat of this.itemTable) {
-        if(stat !== undefined) {
-          if(stat.caracName === focusName)
-            focusPrix = stat.prixFocus
-        }
-      }
-      if (focusName === "SANS FOCUS") {
-        focusName = "Pas de Focus";
-        focusPrix = this.itemTable[this.getItem(this.itemRecherche).statistics.length].prixFocus;
-      }
       let res = {
         item: this.itemRecherche,
         type: this.itemType,
         level: this.itemLevel,
         date: dateTime,
         coef: this.coef,
-        focus: focusName,
-        prix: focusPrix,
+        focus: this.selectedCarac === "TOTAL SANS FOCUS" ? "Pas de Focus" : this.selectedCarac,
+        prix: this.selectedPrice,
         rentable: isRentable,
         img: this.imgURL,
         who: localStorage.getItem('logged')
       };
-      console.log(res)
-      // this.updateCoef()
-      // PostService.addHistorique(res).then(() => {
-      //   this.getHistorique();
-      // });
+      this.updateCoef()
+      PostService.addHistorique(res).then(() => {
+        this.getHistorique();
+      });
 
+    },
+
+    addHistory(carac, price) {
+      this.selectedCarac = carac;
+      this.selectedPrice = price;
+      this.dialogValidation = true;
     },
     async getHistorique() {
       try {
