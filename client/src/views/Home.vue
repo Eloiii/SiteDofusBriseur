@@ -129,7 +129,6 @@
             <template v-slot:item.prixFocus="props">
               <v-chip
                 :color="sortPrix(props.item.prixFocus)"
-                dark
               >
                 {{ props.item.prixFocus }}
               </v-chip>
@@ -175,13 +174,14 @@
         >
           <template v-slot:activator="{ on, attrs }">
             <v-btn
+              :dark="isItemRecherche"
+              :disabled="!isItemRecherche"
               class="mx-auto"
               color="deep-purple accent-4"
-              dark
               v-bind="attrs"
               v-on="on"
             >
-              J'ai brisé l'item
+              Je viens de briser cet item
               <v-icon
                 dark
                 right
@@ -194,6 +194,15 @@
             <v-card-title>
               <span class="headline">Le brisage a-t-il été rentable ?</span>
             </v-card-title>
+            <v-card-text class="mt-7">
+              <v-select 
+                v-model="focusConfirmation"
+                :items="getItemStatsNames()"
+                clearable
+                outlined
+                label="Focus choisi"
+              />
+            </v-card-text>
             <v-card-actions>
               <v-btn
                 color="grey"
@@ -235,11 +244,11 @@ export default {
     itemRecherche: "",
     headers: [
       {text: "Caractéristique", value: "caracName"},
-      {text: "Valeur", value: "caracValue"},
-      {text: "Prix unitaire", value: "prixUnit"},
-      {text: "Quantité (Focus)", value: "qtFocus"},
-      {text: "Prix (Focus)", value: "prixFocus"},
-      {text: "Aucun Focus", value: "qtNoFocus"},
+      {text: "Valeur moyenne", value: "caracValue"},
+      {text: "Prix unitaire (modifiable)", value: "prixUnit"},
+      {text: "Quantité de rune estimée (Focus)", value: "qtFocus"},
+      {text: "Revenus en kamas (Focus)", value: "prixFocus"},
+      {text: "Quantité sans focus", value: "qtNoFocus"},
     ],
     itemTable: [],
     items: [],
@@ -257,6 +266,7 @@ export default {
     historique: [],
     dateItem: "",
     itemType: "",
+    focusConfirmation: "",
     reglesCoef: {
       required: (value) => !!value || "Nécessaire et numérique",
     },
@@ -332,6 +342,28 @@ export default {
       this.dateItem = "";
       this.imgURL = "";
     },
+
+    getItemStatsNames() {
+      if (!this.isItemRecherche)
+        return
+      let res = []
+      for (const stat of this.getItem(this.itemRecherche).statistics) {
+        let readableStat = Object.keys(stat);
+        let nomStat = readableStat[0];
+        let caracValue = Math.round((stat[nomStat].min + stat[nomStat].max) / 2);
+        if (caracValue >= 0 && !nomStat.startsWith("(")) {
+          res.push(nomStat)
+        }
+      }
+      console.log("oui")
+      for(const stat of this.itemTable) {
+        if (stat.prixFocus === this.maxPrix)
+          this.focusConfirmation = stat.caracName
+      }
+      res.push("SANS FOCUS")
+      return res;
+    },
+
     save({caracName, prix}) {
       if (this.isANumber(prix)) {
         PostService.insertRune({
@@ -367,6 +399,7 @@ export default {
         }
       }
     },
+
     displayItemStats(item) {
       this.itemTable = [];
       this.maxPrix = -5;
@@ -374,12 +407,11 @@ export default {
         let readableStat = Object.keys(stat);
         let nomStat = readableStat[0];
         let test = /^[0-99]+%/;
-        let caracValue = stat[nomStat].min;
+        let caracValue = Math.round((stat[nomStat].min + stat[nomStat].max) / 2);
         if (caracValue >= 0 && !nomStat.startsWith("(")) {
           if (test.test(nomStat)) {
             nomStat = nomStat.substr(1, nomStat.length);
           }
-
           let prix = this.getRunePrix(nomStat);
           let realStat = {
             caracName: nomStat,
@@ -534,11 +566,11 @@ export default {
       }
       this.itemTable[this.getItem(this.itemRecherche).statistics.length] = {
         caracName: "TOTAL SANS FOCUS",
-        caracValue: "-",
-        prixUnit: "-",
-        qtFocus: "-",
+        caracValue: "",
+        prixUnit: "",
+        qtFocus: "",
         prixFocus: totalSansFocus,
-        qtNoFocus: "-",
+        qtNoFocus: "",
       };
     },
 
@@ -560,16 +592,19 @@ export default {
           ":" +
           this.minutes_with_leading_zeros(current.getMinutes());
       let dateTime = cDate + " " + cTime;
-      let focusName;
       let focusPrix;
+      let focusName = this.focusConfirmation
+      if(focusName === "")
+        return
       for (const stat of this.itemTable) {
-        if (stat.prixFocus === this.maxPrix) {
-          focusName = stat.caracName;
-          focusPrix = stat.prixFocus;
+        if(stat !== undefined) {
+          if(stat.caracName === focusName)
+            focusPrix = stat.prixFocus
         }
       }
-      if (focusName === "TOTAL SANS FOCUS") {
+      if (focusName === "SANS FOCUS") {
         focusName = "Pas de Focus";
+        focusPrix = this.itemTable[this.getItem(this.itemRecherche).statistics.length].prixFocus;
       }
       let res = {
         item: this.itemRecherche,
@@ -583,10 +618,11 @@ export default {
         img: this.imgURL,
         who: localStorage.getItem('logged')
       };
-      this.updateCoef()
-      PostService.addHistorique(res).then(() => {
-        this.getHistorique();
-      });
+      console.log(res)
+      // this.updateCoef()
+      // PostService.addHistorique(res).then(() => {
+      //   this.getHistorique();
+      // });
 
     },
     async getHistorique() {

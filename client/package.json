@@ -16,7 +16,7 @@
     "mongodb": "^3.6.4",
     "vue": "^2.6.11",
     "vue-router": "^3.5.1",
-    "vuetify": "^2.4.0"
+    "vuetify": "*"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
