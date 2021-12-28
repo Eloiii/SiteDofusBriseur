@@ -43,12 +43,6 @@ router.post("/historique", async (req, res) => {
     res.status(201).send();
 });
 
-router.post("/historique", async (req, res) => {
-    // let itemEtCoeff = req.body;
-    // setCoef(itemEtCoeff);
-    // res.status(201).send();
-});
-
 /**
  * Add a user
  */
@@ -80,8 +74,7 @@ let collectionItems;
 let collectionHistorique;
 let collectionAccounts;
 
-const uri = apiKey
-const client = new MongoClient(uri, {useUnifiedTopology: true});
+const client = new MongoClient(apiKey, {useUnifiedTopology: true});
 client.connect((err) => {
     const db = client.db("dofusBriseur");
     collectionRunes = db.collection("runes");
@@ -94,10 +87,6 @@ client.connect((err) => {
 
 function getAllRunes() {
     return collectionRunes.find({}, {projection: {_id: 0}}).toArray();
-}
-
-function addRune(item) {
-    collectionRunes.insertOne(item);
 }
 
 function updateRune(runeData) {
@@ -130,7 +119,17 @@ function addHistorique(historique) {
  * @returns {Promise<void>} inserting user
  */
 async function addAcount(newAccount) {
-    await collectionAccounts.insertOne(newAccount)
+    const user = await collectionAccounts.findOne({nom: newAccount.nom})
+    if(user !== null) {
+        await collectionAccounts.findOneAndUpdate(
+            {nom: newAccount.nom},
+            {$set: {password: newAccount.password}},
+        );
+    }
+    else {
+        await collectionAccounts.insertOne(newAccount)
+    }
+
 }
 
 /**

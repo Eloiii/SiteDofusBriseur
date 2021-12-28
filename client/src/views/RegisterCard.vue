@@ -137,7 +137,6 @@ export default {
         } else {
           const testUserName = await PostService.getUser(this.login)
           if (testUserName !== '') {
-            console.log(testUserName)
             this.$emit('snackBar', 'nameAlreadyExists')
           } else {
             await bcrypt.genSalt(10, function (err, salt) {
