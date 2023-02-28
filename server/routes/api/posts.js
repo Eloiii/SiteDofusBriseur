@@ -74,8 +74,8 @@ let collectionItems;
 let collectionHistorique;
 let collectionAccounts;
 
-const client = new MongoClient(apiKey, {useUnifiedTopology: true});
-client.connect((err) => {
+const client = new MongoClient(apiKey, {useNewUrlParser: true, useUnifiedTopology: true});
+client.connect(err => {
     const db = client.db("dofusBriseur");
     collectionRunes = db.collection("runes");
     collectionItems = db.collection("items");
@@ -120,13 +120,12 @@ function addHistorique(historique) {
  */
 async function addAcount(newAccount) {
     const user = await collectionAccounts.findOne({nom: newAccount.nom})
-    if(user !== null) {
+    if (user !== null) {
         await collectionAccounts.findOneAndUpdate(
             {nom: newAccount.nom},
             {$set: {password: newAccount.password}},
         );
-    }
-    else {
+    } else {
         await collectionAccounts.insertOne(newAccount)
     }
 
