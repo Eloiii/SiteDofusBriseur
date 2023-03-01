@@ -22,11 +22,11 @@
             <v-autocomplete
               :items="items"
               :loading="loading"
-              v-model:search-input="itemRecherche"
+              v-model="itemRecherche"
               auto-select-first
               cache-items
               clearable
-              item-text="name"
+              item-title="name"
               label="Item"
               no-data-text="En attente des données..."
               placeholder="Recherche un item"
@@ -45,7 +45,7 @@
         >
           <v-img
             v-if="imgURL.length >= 3"
-            :src="require(`@/assets/items/${imgURL}`)"
+            :src="`@/assets/items/${imgURL}`"
             class="mx-auto"
             height="125px"
             width="125px"
@@ -120,7 +120,7 @@
         >
           <v-data-table
             :headers="headers"
-            :hide-default-footer="true"
+            hide-default-footer
             :items="itemTable"
             class="elevation-2"
             disable-pagination
@@ -214,43 +214,43 @@
           </v-card>
         </v-dialog>
       </v-row>
-      {{runesData}}
     </v-container>
   </v-app>
 </template>
 
 <script setup>
 import {onMounted, ref, watch} from "vue";
-import {useCollection, useDocument, useFirestore} from 'vuefire'
-import {doc, collection} from 'firebase/firestore'
+import {useCollection, useFirestore} from 'vuefire'
+import {collection} from 'firebase/firestore'
 
 const db = useFirestore()
+
+
+const runesData = useCollection(collection(db, 'runes'))
+const coefs = useCollection(collection(db, 'items'));
+const historique = useCollection(collection(db, 'historiqueBrisage'));
+
 
 const dialog = ref(false)
 const dialogValidation = ref(false)
 const itemRecherche = ref("")
 const headers = ref([
-  {text: "Caractéristique", value: "caracName"},
-  {text: "Valeur moyenne", value: "caracValue"},
-  {text: "Prix unitaire (modifiable)", value: "prixUnit"},
-  {text: "Quantité de rune estimée (Focus)", value: "qtFocus"},
-  {text: "Revenus en kamas (Focus)", value: "prixFocus"},
-  {text: "Quantité sans focus", value: "qtNoFocus"}
+  {title: "Caractéristique", value: "caracName"},
+  {title: "Valeur moyenne", value: "caracValue"},
+  {title: "Prix unitaire (modifiable)", value: "prixUnit"},
+  {title: "Quantité de rune estimée (Focus)", value: "qtFocus"},
+  {title: "Revenus en kamas (Focus)", value: "prixFocus"},
+  {title: "Quantité sans focus", value: "qtNoFocus"}
 ])
 const itemTable = ref([])
 const items = ref([])
-const equipements = ref([])
-const weapons = ref([])
-const runesData = ref({})
 const newPrix = ref("")
 const coef = ref(100)
-const coefs = ref([])
 const snackbar = ref(false)
 const itemLevel = ref(0)
 const imgURL = ref("")
 const isItemRecherche = ref(false)
 const maxPrix = ref(-5)
-const historique = ref([])
 const dateItem = ref("")
 const itemType = ref("")
 const focusConfirmation = ref("")
@@ -285,38 +285,28 @@ watch(itemRecherche, (newVal, oldVal) => {
 })
 
 onMounted(async () => {
-  try {
-    if (sessionStorage.getItem('items')) {
-      items.value = JSON.parse(sessionStorage.getItem('items'))
-    } else {
-      equipements.value = await getAllEquipments()
-      weapons.value = await getAllWeapons()
+  if (sessionStorage.getItem('items')?.length > 0) {
+    items.value = JSON.parse(sessionStorage.getItem('items'))
+  } else {
+    const equipments = await getAllEquipments()
+    const weapons = await getAllWeapons()
 
-      items.value = [...filterItems(equipements.value), ...filterItems(weapons.value)];
-      console.log(items.value)
-      sessionStorage.setItem('items', JSON.stringify(items.value))
-    }
-    // console.log(items.value)
-    items.value.sort();
-    loading.value = false
-    await getRunes();
-    await getCoefs();
-    await georique();
-
-  } catch (err) {
-    console.log(err);
+    items.value = [...filterItems(equipments), ...filterItems(weapons)];
+    sessionStorage.setItem('items', JSON.stringify(items.value))
   }
+  items.value.sort();
+  loading.value = false
 })
 
 async function getAllEquipments() {
   const response = await fetch("https://fr.dofus.dofapi.fr/equipments")
-  const data = response.json()
+  const data = await response.json()
   return data
 }
 
 async function getAllWeapons() {
   const response = await fetch("https://fr.dofus.dofapi.fr/weapons")
-  const data = response.json()
+  const data = await response.json()
   return data
 }
 
@@ -364,17 +354,8 @@ function save({caracName, prix}) {
   }
 }
 
-async function getRunes() {
-  console.log("u")
-  try {
-    runesData.value = useCollection(collection(db, 'runes'));
-  } catch (err) {
-    console.log(err);
-  }
-}
-
 function getItem(val) {
-  for (const item of items) {
+  for (const item of items.value) {
     if (item.name === val) {
       return item;
     }
@@ -382,7 +363,7 @@ function getItem(val) {
 }
 
 function getRunePrix(nomStat) {
-  for (const runeGroup of runesData) {
+  for (const runeGroup of runesData.value) {
     if (runeGroup.carac === nomStat) {
       return runeGroup.prix;
     }
@@ -414,41 +395,35 @@ function displayItemStats(item) {
   fillNoFocus();
 }
 
-async function getCoefs() {
-  try {
-    coefs.value = useCollection(collection(db, 'items'));
-  } catch (err) {
-    console.log(err);
-  }
-}
 
 function setCoef(itemName) {
-  for (const item of coefs) {
+  for (const item of coefs.value) {
     if (item.nom === itemName) {
       coef.value = item.coef;
-      displayItemStats(getItem(itemRecherche));
+      displayItemStats(getItem(itemRecherche.value));
     }
   }
 }
 
 function updateCoef() {
   if (isANumber(coef)) {
-    PostService.updateCoef({
-      nom: itemRecherche,
-      coef: parseInt(coef),
-    }).then(() => {
-      getCoefs().then(() => {
-        snackbar.value = true;
-        displayItemStats(getItem(itemRecherche));
-        calculateNoFocusPrice();
-      });
-    });
+    console.log("TODO updateCoef")
+    // PostService.updateCoef({
+    //   nom: itemRecherche,
+    //   coef: parseInt(coef),
+    // }).then(() => {
+    //   getCoefs().then(() => {
+    //     snackbar.value = true;
+    //     displayItemStats(getItem(itemRecherche));
+    //     calculateNoFocusPrice();
+    //   });
+    // });
   }
 }
 
 function calculateNoFocusPrice() {
   let total = 0;
-  for (const stat of itemTable) {
+  for (const stat of itemTable.value) {
     total =
       total +
       Math.floor(quantityNoFocus(stat)) *
@@ -458,7 +433,7 @@ function calculateNoFocusPrice() {
 
 function calculateMaxFocusValue() {
   let max = 0;
-  for (const stat of itemTable) {
+  for (const stat of itemTable.value) {
     max = Math.max(
       max,
       Math.floor(quantityFocus(stat)) *
@@ -468,7 +443,7 @@ function calculateMaxFocusValue() {
 }
 
 function getUnitWeight(statName) {
-  for (const runeGroup of runesData) {
+  for (const runeGroup of runesData.value) {
     if (runeGroup.carac === statName) {
       return runeGroup.poidsUnité;
     }
@@ -476,7 +451,7 @@ function getUnitWeight(statName) {
 }
 
 function getRuneWeight(statName) {
-  for (const runeGroup of runesData) {
+  for (const runeGroup of runesData.value) {
     if (runeGroup.carac === statName) {
       return runeGroup.poidsRune;
     }
@@ -500,7 +475,7 @@ function quantityNoFocus(stat) {
 
 function getTotalWeight() {
   let total = 0;
-  for (const stat of itemTable) {
+  for (const stat of itemTable.value) {
     total += stat.caracValue * getUnitWeight(stat.caracName);
   }
   return total;
@@ -536,25 +511,25 @@ function setPrix(stat) {
 
 function fillTableWithCalculations() {
   for (let index = 0; index < itemTable.value.length; index++) {
-    itemTable[index].value = {
-      caracName: itemTable[index].caracName,
-      caracValue: itemTable[index].caracValue,
-      prixUnit: itemTable[index].prixUnit,
-      qtFocus: quantityFocus(itemTable[index]),
-      prixFocus: setPrix(itemTable[index]),
-      qtNoFocus: quantityNoFocus(itemTable[index]),
+    itemTable.value[index] = {
+      caracName: itemTable.value[index].caracName,
+      caracValue: itemTable.value[index].caracValue,
+      prixUnit: itemTable.value[index].prixUnit,
+      qtFocus: quantityFocus(itemTable.value[index]),
+      prixFocus: setPrix(itemTable.value[index]),
+      qtNoFocus: quantityNoFocus(itemTable.value[index]),
     };
   }
 }
 
 function fillNoFocus() {
   let totalSansFocus = 0;
-  for (const stat of itemTable) {
+  for (const stat of itemTable.value) {
     totalSansFocus += Math.round(
       getRunePrix(stat.caracName) * quantityNoFocus(stat)
     );
   }
-  itemTable[getItem(itemRecherche).statistics.length].value = {
+  itemTable.value[getItem(itemRecherche.value).statistics.length] = {
     caracName: "TOTAL SANS FOCUS",
     caracValue: "",
     prixUnit: "",
@@ -595,9 +570,9 @@ async function addHistorique(isRentable) {
     who: localStorage.getItem('logged')
   };
   updateCoef()
-  PostService.addHistorique(res).then(() => {
-    georique();
-  });
+  // PostService.addHistorique(res).then(() => {
+  //   georique();
+  // });
 
 }
 
@@ -607,16 +582,8 @@ function addHistory(carac, price) {
   dialogValidation.value = true;
 }
 
-async function georique() {
-  try {
-    historique.value = useCollection(collection(db, 'historiqueBrisage'));
-  } catch (err) {
-    console.log(err);
-  }
-}
-
 function setDateItem() {
-  for (const item of historique) {
+  for (const item of historique.value) {
     if (item.item === itemRecherche.value) {
       dateItem.value = item.date;
     }
@@ -633,7 +600,7 @@ function setImageURL(item) {
 
 function goToLastBrisage() {
   if (dateItem.value !== 'Pas d\'ancien brisage') {
-    $router.push({name: 'Historique', params: {item: itemRecherche}})
+    $router.push({name: 'Historique', params: {item: itemRecherche.value}})
   }
 }
 </script>
