@@ -45,7 +45,7 @@
         >
           <v-img
             v-if="imgURL.length >= 3"
-            :src="`@/assets/items/${imgURL}`"
+            :src="getImageUrl(imgURL)"
             class="mx-auto"
             height="125px"
             width="125px"
@@ -122,45 +122,59 @@
             :headers="headers"
             hide-default-footer
             :items="itemTable"
-            class="elevation-2"
+            class="elevation-1"
             disable-pagination
             no-data-text="Sélectionne un item pour voir ses caractéristiques"
           >
-            <template v-slot:item.prixFocus="props">
+            <template v-slot:item.prixFocus="{item}">
               <v-chip
-                :color="sortPrix(props.item.prixFocus)"
-                :disabled="Nan(props.item.prixFocus)"
-                @click="addHistory(props.item.caracName, props.item.prixFocus)"
+                :color="sortPrix(item.raw.prixFocus)"
+                :disabled="isNaN(item.raw.prixFocus)"
+                @click="addHistory(item.raw.caracName, item.raw.prixFocus)"
               >
-                {{ props.item.prixFocus }}
+                {{ item.raw.prixFocus }}
               </v-chip>
             </template>
-            <template v-slot:item.prixUnit="props">
-              <v-edit-dialog
-                large
-                persistent
-                @save="
-                  save({
-                    prix: newPrix,
-                    caracName: props.item.caracName,
-                  })
-                "
+            <template v-slot:item.prixUnit="{item}">
+              <v-dialog
+                v-model="dialog"
+                width="auto"
               >
-                <div>{{ props.item.prixUnit }}</div>
-                <template v-slot:input>
-                  <div class="mt-4 title">
-                    Changer le prix de la rune
-                  </div>
-                  <v-text-field
-                    v-model="newPrix"
-                    :rules="[numberRule]"
-                    autofocus
-                    hint="Nouveau prix"
-                    single-line
-                    type="number"
-                  />
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    variant="text"
+                    v-bind="props"
+                  >
+                    {{ item.raw.prixUnit }}
+                  </v-btn>
                 </template>
-              </v-edit-dialog>
+
+                <v-card>
+                  <v-card-title>
+                    Changer le prix de la rune
+                  </v-card-title>
+                  <v-card-text>
+                    <v-text-field
+                      v-model="newPrix"
+                      :rules="[numberRule]"
+                      autofocus
+                      hint="Nouveau prix"
+                      single-line
+                      type="number"
+                    />
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn color="primary" @click="save({
+                    prix: newPrix,
+                    caracName: item.raw.caracName,
+                  });dialog=false">
+                      Valider
+                    </v-btn>
+                  </v-card-actions>
+
+
+                </v-card>
+              </v-dialog>
             </template>
           </v-data-table>
           <v-alert
@@ -235,12 +249,12 @@ const dialog = ref(false)
 const dialogValidation = ref(false)
 const itemRecherche = ref("")
 const headers = ref([
-  {title: "Caractéristique", value: "caracName"},
-  {title: "Valeur moyenne", value: "caracValue"},
-  {title: "Prix unitaire (modifiable)", value: "prixUnit"},
-  {title: "Quantité de rune estimée (Focus)", value: "qtFocus"},
-  {title: "Revenus en kamas (Focus)", value: "prixFocus"},
-  {title: "Quantité sans focus", value: "qtNoFocus"}
+  {title: "Caractéristique", key: "caracName"},
+  {title: "Valeur moyenne", key: "caracValue"},
+  {title: "Prix unitaire (modifiable)", key: "prixUnit"},
+  {title: "Quantité de rune estimée (Focus)", key: "qtFocus"},
+  {title: "Revenus en kamas (Focus)", key: "prixFocus"},
+  {title: "Quantité sans focus", key: "qtNoFocus"}
 ])
 const itemTable = ref([])
 const items = ref([])
@@ -265,7 +279,7 @@ const numberRule = ref(value => Number.isInteger(Number(value)) && Number(value)
 watch(coef, async (newVal, oldVal) => {
   if (newVal.length > 0) {
     coef.value = parseInt(newVal);
-    displayItemStats(getItem(itemRecherche));
+    displayItemStats(getItem(itemRecherche.value));
   }
 })
 
@@ -341,25 +355,22 @@ function clearTable() {
 
 function save({caracName, prix}) {
   if (isANumber(prix)) {
-    PostService.insertRune({
-      carac: caracName,
-      prix: parseInt(prix),
-    }).then(() => {
-      getRunes().then(() => {
-        maxPrix.value = -5;
-        displayItemStats(getItem(itemRecherche));
-        newPrix.value = "";
-      });
-    });
+    // PostService.insertRune({
+    //   carac: caracName,
+    //   prix: parseInt(prix),
+    // }).then(() => {
+    //   getRunes().then(() => {
+    //     maxPrix.value = -5;
+    //     displayItemStats(getItem(itemRecherche));
+    //     newPrix.value = "";
+    //   });
+    // });
+    console.log("TODO UPDATE")
   }
 }
 
 function getItem(val) {
-  for (const item of items.value) {
-    if (item.name === val) {
-      return item;
-    }
-  }
+  return items.value.find(e => e.name === val)
 }
 
 function getRunePrix(nomStat) {
@@ -393,6 +404,10 @@ function displayItemStats(item) {
   }
   fillTableWithCalculations();
   fillNoFocus();
+}
+
+function getImageUrl(url) {
+  return new URL(`../assets/items/${url}`, import.meta.url).href
 }
 
 
@@ -519,6 +534,7 @@ function fillTableWithCalculations() {
       prixFocus: setPrix(itemTable.value[index]),
       qtNoFocus: quantityNoFocus(itemTable.value[index]),
     };
+    console.log(itemTable.value[index])
   }
 }
 
