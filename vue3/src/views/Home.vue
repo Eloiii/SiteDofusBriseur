@@ -214,18 +214,17 @@
           </v-card>
         </v-dialog>
       </v-row>
-      {{ todos }}
+      {{runesData}}
     </v-container>
   </v-app>
 </template>
 
 <script setup>
 import {onMounted, ref, watch} from "vue";
-import {useCollection, useFirestore} from 'vuefire'
-import {collection} from 'firebase/firestore'
+import {useCollection, useDocument, useFirestore} from 'vuefire'
+import {doc, collection} from 'firebase/firestore'
 
 const db = useFirestore()
-const todos = useCollection(collection(db, 'historiqueBrisage'))
 
 const dialog = ref(false)
 const dialogValidation = ref(false)
@@ -242,7 +241,7 @@ const itemTable = ref([])
 const items = ref([])
 const equipements = ref([])
 const weapons = ref([])
-const runesData = ref([])
+const runesData = ref({})
 const newPrix = ref("")
 const coef = ref(100)
 const coefs = ref([])
@@ -290,11 +289,14 @@ onMounted(async () => {
     if (sessionStorage.getItem('items')) {
       items.value = JSON.parse(sessionStorage.getItem('items'))
     } else {
-      equipements.value = await PostService.getAllEquipments();
-      weapons.value = await PostService.getAllWeapons();
-      items.value = [...filterItems(equipements), ...filterItems(weapons)];
-      sessionStorage.setItem('items', JSON.stringify(items))
+      equipements.value = await getAllEquipments()
+      weapons.value = await getAllWeapons()
+
+      items.value = [...filterItems(equipements.value), ...filterItems(weapons.value)];
+      console.log(items.value)
+      sessionStorage.setItem('items', JSON.stringify(items.value))
     }
+    // console.log(items.value)
     items.value.sort();
     loading.value = false
     await getRunes();
@@ -305,6 +307,18 @@ onMounted(async () => {
     console.log(err);
   }
 })
+
+async function getAllEquipments() {
+  const response = await fetch("https://fr.dofus.dofapi.fr/equipments")
+  const data = response.json()
+  return data
+}
+
+async function getAllWeapons() {
+  const response = await fetch("https://fr.dofus.dofapi.fr/weapons")
+  const data = response.json()
+  return data
+}
 
 function filterItems(items) {
   return items.map(o => ['imgUrl', 'level', 'name', 'statistics', 'type'].reduce((acc, curr) => {
@@ -351,8 +365,9 @@ function save({caracName, prix}) {
 }
 
 async function getRunes() {
+  console.log("u")
   try {
-    runesData.value = await PostService.getRunes();
+    runesData.value = useCollection(collection(db, 'runes'));
   } catch (err) {
     console.log(err);
   }
@@ -401,7 +416,7 @@ function displayItemStats(item) {
 
 async function getCoefs() {
   try {
-    coefs.value = await PostService.getCoefs();
+    coefs.value = useCollection(collection(db, 'items'));
   } catch (err) {
     console.log(err);
   }
@@ -594,7 +609,7 @@ function addHistory(carac, price) {
 
 async function georique() {
   try {
-    historique.value = await PostService.georique();
+    historique.value = useCollection(collection(db, 'historiqueBrisage'));
   } catch (err) {
     console.log(err);
   }
