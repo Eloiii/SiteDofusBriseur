@@ -1,5 +1,4 @@
 <template>
-  <v-app>
     <v-container class="mt-10">
       <v-row
         align="center"
@@ -230,7 +229,6 @@
         </v-dialog>
       </v-row>
     </v-container>
-  </v-app>
 </template>
 
 <script setup>
@@ -306,7 +304,7 @@ onMounted(async () => {
     const equipments = await getAllEquipments()
     const weapons = await getAllWeapons()
 
-    items.value = [...filterItems(equipments), ...filterItems(weapons)];
+    items.value = [...filterItems(equipments), ...filterItems(weapons)].slice(450, 470);
     sessionStorage.setItem('items', JSON.stringify(items.value))
   }
   items.value.sort();
