@@ -120,32 +120,42 @@
         >
           <v-data-table
             :headers="headers"
-            hide-default-footer
             :items="itemTable"
+            :items-per-page="25"
             class="elevation-1"
             disable-pagination
             no-data-text="Sélectionne un item pour voir ses caractéristiques"
+            hide-default-footer
           >
+            <template v-slot:top>
+              <v-alert
+                type="info"
+                variant="tonal"
+              >
+                Clique sur une bulle grise ou verte dans la colonne des revenus pour enregistrer un nouveau brisage
+              </v-alert>
+            </template>
             <template v-slot:item.prixFocus="{item}">
               <v-chip
-                :color="sortPrix(item.raw.prixFocus)"
-                :disabled="isNaN(item.raw.prixFocus)"
-                @click="addHistory(item.raw.caracName, item.raw.prixFocus)"
+                :color="sortPrix(item?.raw?.prixFocus)"
+                :disabled="!isANumber(item?.raw?.prixFocus)"
+                @click="addHistory(item?.raw?.caracName, item?.raw?.prixFocus)"
               >
-                {{ item.raw.prixFocus }}
+                {{ item?.raw?.prixFocus }}
               </v-chip>
             </template>
             <template v-slot:item.prixUnit="{item}">
               <v-dialog
-                v-model="dialog"
                 width="auto"
+                v-if="item?.raw.caracName !== 'TOTAL SANS FOCUS'"
               >
                 <template v-slot:activator="{ props }">
                   <v-btn
                     variant="text"
                     v-bind="props"
+                    @click="newPrix = item.raw.prixUnit"
                   >
-                    {{ item.raw.prixUnit }}
+                    {{ item?.raw?.prixUnit }}
                   </v-btn>
                 </template>
 
@@ -167,7 +177,7 @@
                     <v-btn color="primary" @click="save({
                     prix: newPrix,
                     caracName: item.raw.caracName,
-                  });dialog=false">
+                  })">
                       Valider
                     </v-btn>
                   </v-card-actions>
@@ -177,15 +187,6 @@
               </v-dialog>
             </template>
           </v-data-table>
-          <v-alert
-            class="mt-16"
-            color="deep-purple accent-4"
-            outlined
-            text
-            type="info"
-          >
-            Clique sur une bulle grise ou verte dans la colonne des revenus pour enregistrer un nouveau brisage
-          </v-alert>
         </v-col>
       </v-row>
       <v-row
@@ -235,7 +236,7 @@
 <script setup>
 import {onMounted, ref, watch} from "vue";
 import {useCollection, useFirestore} from 'vuefire'
-import {collection} from 'firebase/firestore'
+import {addDoc, collection, getDocs, query, updateDoc, where} from 'firebase/firestore'
 
 const db = useFirestore()
 
@@ -245,7 +246,7 @@ const coefs = useCollection(collection(db, 'items'));
 const historique = useCollection(collection(db, 'historiqueBrisage'));
 
 
-const dialog = ref(false)
+// const dialog = ref(false)
 const dialogValidation = ref(false)
 const itemRecherche = ref("")
 const headers = ref([
@@ -278,7 +279,7 @@ const numberRule = ref(value => Number.isInteger(Number(value)) && Number(value)
 
 watch(coef, async (newVal, oldVal) => {
   if (newVal.length > 0) {
-    coef.value = parseInt(newVal);
+    coef.value = Number(newVal);
     displayItemStats(getItem(itemRecherche.value));
   }
 })
@@ -332,10 +333,7 @@ function filterItems(items) {
 }
 
 function isANumber(number) {
-  if (number !== undefined && number !== null) {
-    return Number.isInteger(Number(number)) && Number(number) > 0
-  }
-  return false
+  return !isNaN(number)
 }
 
 function sortPrix(prix) {
@@ -353,19 +351,20 @@ function clearTable() {
   imgURL.value = "";
 }
 
-function save({caracName, prix}) {
+async function save({caracName, prix}) {
   if (isANumber(prix)) {
-    // PostService.insertRune({
-    //   carac: caracName,
-    //   prix: parseInt(prix),
-    // }).then(() => {
-    //   getRunes().then(() => {
-    //     maxPrix.value = -5;
-    //     displayItemStats(getItem(itemRecherche));
-    //     newPrix.value = "";
-    //   });
-    // });
-    console.log("TODO UPDATE")
+    const q = query(collection(db, "runes"), where("carac", "==", caracName));
+
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      updateDoc(doc.ref, {
+        prix: Number(prix)
+      }).then(() => {
+        maxPrix.value = -5;
+        displayItemStats(getItem(itemRecherche.value));
+        newPrix.value = "";
+      })
+    });
   }
 }
 
@@ -420,19 +419,20 @@ function setCoef(itemName) {
   }
 }
 
-function updateCoef() {
-  if (isANumber(coef)) {
-    console.log("TODO updateCoef")
-    // PostService.updateCoef({
-    //   nom: itemRecherche,
-    //   coef: parseInt(coef),
-    // }).then(() => {
-    //   getCoefs().then(() => {
-    //     snackbar.value = true;
-    //     displayItemStats(getItem(itemRecherche));
-    //     calculateNoFocusPrice();
-    //   });
-    // });
+async function updateCoef() {
+  if (isANumber(coef.value)) {
+    const q = query(collection(db, "items"), where("nom", "==", itemRecherche.value));
+
+    const querySnapshot = await getDocs(q);
+    querySnapshot.forEach((doc) => {
+      updateDoc(doc.ref, {
+        coef: Number(coef.value)
+      }).then(() => {
+        snackbar.value = true;
+        displayItemStats(getItem(itemRecherche.value));
+        calculateNoFocusPrice();
+      })
+    });
   }
 }
 
@@ -534,7 +534,6 @@ function fillTableWithCalculations() {
       prixFocus: setPrix(itemTable.value[index]),
       qtNoFocus: quantityNoFocus(itemTable.value[index]),
     };
-    console.log(itemTable.value[index])
   }
 }
 
@@ -561,36 +560,23 @@ function minutes_with_leading_zeros(min) {
 
 async function addHistorique(isRentable) {
   dialogValidation.value = false;
-  let current = new Date();
-  let cDate =
-    ("0" + current.getDate()).slice(-2) +
-    "/" +
-    ("0" + (current.getMonth() + 1)).slice(-2) +
-    "/" +
-    current.getFullYear();
-  let cTime =
-    minutes_with_leading_zeros(current.getHours()) +
-    ":" +
-    minutes_with_leading_zeros(current.getMinutes());
-  let dateTime = cDate + " " + cTime;
   let res = {
-    item: itemRecherche,
-    type: itemType,
-    level: itemLevel,
-    date: dateTime,
-    coef: coef,
-    focus: selectedCarac.value === "TOTAL SANS FOCUS" ? "Pas de Focus" : selectedCarac,
-    prix: selectedPrice,
+    item: itemRecherche.value,
+    type: itemType.value,
+    level: itemLevel.value,
+    date: new Date(),
+    coef: coef.value,
+    focus: selectedCarac.value === "TOTAL SANS FOCUS" ? "Pas de Focus" : selectedCarac.value,
+    prix: selectedPrice.value,
     rentable: isRentable,
-    img: imgURL,
-    who: localStorage.getItem('logged')
+    img: imgURL.value,
+    who: "TODO"
   };
-  updateCoef()
-  // PostService.addHistorique(res).then(() => {
-  //   georique();
-  // });
-
+  await updateCoef()
+  console.log(res)
+  await addDoc(collection(db, "historiqueBrisage"), res)
 }
+
 
 function addHistory(carac, price) {
   selectedCarac.value = carac;
@@ -601,7 +587,7 @@ function addHistory(carac, price) {
 function setDateItem() {
   for (const item of historique.value) {
     if (item.item === itemRecherche.value) {
-      dateItem.value = item.date;
+      dateItem.value = item.date.toDate().toLocaleString('fr-FR');
     }
   }
   if (dateItem.value === "") {
