@@ -2,6 +2,7 @@
   <v-app>
     <v-navigation-drawer
       permanent
+      v-if="currentUser"
     >
       <v-list
         density="compact"
@@ -18,5 +19,26 @@
 </template>
 
 <script setup>
-  //
+import {useRouter} from "vue-router";
+import {getCurrentUser} from "vuefire";
+import {ref} from "vue"
+
+const router = useRouter()
+let currentUser = ref({})
+
+router.beforeEach(async (to) => {
+  // routes with `meta: { requiresAuth: true }` will check for the users, others won't
+  if (to.meta.requiresAuth) {
+    currentUser.value = await getCurrentUser()
+    // if the user is not logged in, redirect to the login page
+    if (!currentUser.value) {
+      return {
+        path: '/login',
+        query: {
+          redirect: to.fullPath,
+        },
+      }
+    }
+  }
+})
 </script>

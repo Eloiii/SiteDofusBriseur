@@ -13,12 +13,12 @@
     />
     <v-text-field
       v-model="password"
-      :append-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
+      :append-inner-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
       :rules="[rules.required]"
       :type="showPass ? 'text' : 'password'"
       label="Mot de passe"
       @keydown="keyPress"
-      @click:append="showPass = !showPass"
+      @click:append-inner="showPass = !showPass"
     />
     <v-card-actions>
       <v-btn
@@ -41,18 +41,16 @@
 </template>
 <script setup>
 
-import {onMounted, ref} from "vue";
+import {ref} from "vue";
 
 const showPass = ref(false)
 const rules = ref({
   required: value => !!value || 'Required.',
 })
+
 const loginLoading = ref(false)
-const login = ref(null)
-const password = ref(null)
-onMounted(() => {
-  this.$refs.login.focus()
-})
+const login = ref("")
+const password = ref("")
 
 async function loginMethod() {
   loginLoading.value = true

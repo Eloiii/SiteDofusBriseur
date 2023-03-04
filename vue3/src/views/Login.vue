@@ -1,31 +1,36 @@
 <template>
-  <div id="page">
-    <v-slide-x-transition hide-on-leave>
-      <loginCard
-        v-if="loginView"
-        @loginSuccessful="loginSuccessful"
-        @register="loginView = false"
-        @snackBar="snackBar"
-      />
-    </v-slide-x-transition>
-    <v-slide-x-reverse-transition hide-on-leave>
-      <registerCard
-        v-if="!loginView"
-        @back="loginView = true"
-        @snackBar="snackBar"
-      />
-    </v-slide-x-reverse-transition>
-    <v-snackbar
-      v-model="snackbar"
-      :color="snackBarColor"
-      :timeout="5000"
-      absolute
-      bottom
-      elevation="2"
+  <v-container class="fill-height">
+    <v-row
+      align="center"
+      justify="center"
     >
-      {{ snackBarMessage }}
-    </v-snackbar>
-  </div>
+      <v-slide-x-transition hide-on-leave>
+        <loginCard
+          v-if="loginView"
+          @loginSuccessful="loginSuccessful"
+          @register="loginView = false"
+          @snackBar="snackBar"
+        />
+      </v-slide-x-transition>
+      <v-slide-x-reverse-transition hide-on-leave>
+        <registerCard
+          v-if="!loginView"
+          @back="loginView = true"
+          @snackBar="snackBar"
+        />
+      </v-slide-x-reverse-transition>
+      <v-snackbar
+        v-model="snackbar"
+        :color="snackBarColor"
+        :timeout="5000"
+        absolute
+        bottom
+        elevation="2"
+      >
+        {{ snackBarMessage }}
+      </v-snackbar>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -79,13 +84,3 @@ function loginSuccessful() {
 }
 </script>
 
-<style scoped>
-#page {
-  background-color: lightgray;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
-}
-</style>
