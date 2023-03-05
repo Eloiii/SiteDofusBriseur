@@ -34,26 +34,26 @@
           hide-default-footer
           disable-pagination
         >
-          <template v-slot:column.type="{ column }">
-            <v-select
-              v-model="itemType"
-              :items="itemsType"
-              :value="'Tout'"
-              label="Type de l'item"
-            />
-          </template>
-          <template v-slot:column.level="{ column }">
-            <v-text-field
-              v-model="itemLevel"
-              clearable
-              label="Level minimum"
-              max-width="25px"
-              type="number"
-              @click:clear="resetItemLevel"
-            />
-          </template>
+          <!--          <template v-slot:column.type="{ column }">-->
+          <!--            <v-select-->
+          <!--              v-model="itemType"-->
+          <!--              :items="itemsType"-->
+          <!--              :value="'Tout'"-->
+          <!--              label="Type de l'item"-->
+          <!--            />-->
+          <!--          </template>-->
+          <!--          <template v-slot:column.level="{ column }">-->
+          <!--            <v-text-field-->
+          <!--              v-model="itemLevel"-->
+          <!--              clearable-->
+          <!--              label="Level minimum"-->
+          <!--              max-width="25px"-->
+          <!--              type="number"-->
+          <!--              @click:clear="resetItemLevel"-->
+          <!--            />-->
+          <!--          </template>-->
           <template v-slot:item.rentable="{ item }">
-            <v-simple-checkbox
+            <v-checkbox
               v-model="item.raw.rentable"
               disabled
             />
@@ -67,8 +67,8 @@
                   {{ item.raw.item }}
                 </span>
               <v-img
-                v-if="item.img"
-                :src="require(`../assets/items/${item.raw.img}`)"
+                v-if="item.raw.img"
+                :src="getImageUrl(item.raw.img)"
                 contain
                 height="50px"
                 width="50px"
@@ -82,14 +82,15 @@
 </template>
 <script setup>
 
-import {computed, onMounted, ref, watch} from "vue";
-import {useCollection, useFirestore} from "vuefire";
+import {computed, onMounted, ref} from "vue";
+import {getCurrentUser, useCollection, useFirestore} from "vuefire";
 import {collection} from "firebase/firestore";
 import {useRoute} from "vue-router";
 
 const db = useFirestore()
 const items = useCollection(collection(db, 'historiqueBrisage'));
 const route = useRoute()
+const currentUser = ref()
 
 const options = ref({})
 const itemLevel = ref(0)
@@ -122,18 +123,11 @@ const headers = computed(() => {
     {
       title: "Type",
       key: "type",
-      filter: (value) => {
-        if (this.itemType === "Tout") return true;
-        return value === this.itemType;
-      },
       sortable: false
     },
     {
       title: "Level",
       key: "level",
-      filter: (value) => {
-        return value >= parseInt(this.itemLevel);
-      },
       sortable: false
     },
     {
@@ -149,36 +143,24 @@ const headers = computed(() => {
   ];
 })
 const itemTable = computed(() => {
-  return switchName.value ? items.value.filter(item => item.who === localStorage.getItem('logged')) : items.value
+  return switchName.value ? items.value.filter(item => item.who === currentUser.value.uid) : items.value
 })
 
-watch(options, (newVal, oldVal) => {
-  console.log(newVal)
-  // getHistorique();
-})
-
-onMounted(() => {
-  for (const item of items.value) {
-    item.date = item.date.toDate()
-  }
+onMounted(async () => {
+  currentUser.value = await getCurrentUser()
   if (Object.keys(route.params).length > 0) {
     search.value = route.params.item
   }
 })
 
-function getHistorique() {
-  loading.value = true;
-
-  PostService.getHistorique().then((result) => {
-    this.items = result;
-    this.loading = false;
-  });
+function getImageUrl(url) {
+  return new URL(`../assets/items/${url}`, import.meta.url).href
 }
 
-function resetItemLevel(event) {
-  event.preventDefault()
-  setTimeout(() => itemLevel.value = 0, 10)
-}
+// function resetItemLevel(event) {
+//   event.preventDefault()
+//   setTimeout(() => itemLevel.value = 0, 10)
+// }
 
 </script>
 <style>

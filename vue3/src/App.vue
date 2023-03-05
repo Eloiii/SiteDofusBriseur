@@ -45,7 +45,6 @@ router.beforeEach(async (to) => {
   // routes with `meta: { requiresAuth: true }` will check for the users, others won't
   if (to.meta.requiresAuth) {
     currentUser.value = await getCurrentUser()
-    console.log(currentUser.value)
     // if the user is not logged in, redirect to the login page
     if (!currentUser.value) {
       return {
