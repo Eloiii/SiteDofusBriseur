@@ -2,162 +2,111 @@
   <v-card
     class="pl-10 pr-10 pb-5 pt-5"
     elevation="2"
+    width="25%"
   >
     <v-card-title>Créer un compte</v-card-title>
     <v-form
-      ref="form"
-      v-model="valid"
+      @submit.prevent="submit"
     >
-      <v-text-field
-        ref="login"
-        v-model="login"
-        :rules="[rules.required]"
-        label="Nom"
-        required
-      />
-      <v-text-field
-        v-model="password"
-        :append-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
-        :rules="[rules.required]"
-        :type="showPass ? 'text' : 'password'"
-        label="Mot de passe"
-        required
-        @click:append="showPass = !showPass"
-      />
-      <v-text-field
-        v-model="passwordValidation"
-        :append-icon="showPassVal ? 'mdi-eye' : 'mdi-eye-off'"
-        :rules="[rules.required]"
-        :type="showPassVal ? 'text' : 'password'"
-        label="Valider le mot de passe"
-        required
-        @click:append="showPassVal = !showPassVal"
-      />
-      <v-text-field
-        v-model="imageLink"
-        label="Lien d'une image de profil"
-      />
-      <p class="title">
-        Couleur :
-      </p>
-      <v-color-picker
-        v-model="color"
-        :rules="[rules.required]"
-        class="ma-2"
-        hide-inputs
-        hide-mode-switch
-        required
-        swatches-max-height="300px"
-      />
-    </v-form>
-    <p
-      v-if="imageLink || login"
-      class="title"
-    >
-      Prévisualisation :
-    </p>
-    <div
-      v-if="imageLink || login"
-      style="display: flex; justify-content: center; align-items: center"
-    >
-      <v-avatar
-        v-if="imageLink"
-        size="64"
-      >
-        <v-img
-          :src="imageLink"
-          alt="Icône"
+      <v-card-item>
+        <v-text-field
+          v-model="email"
+          :rules="[rules.required, rules.email]"
+          clearable
+          hide-details="auto"
+          label="E-mail"
+          placeholder="shrek@lemarais.com"
+          type="email"
         />
-      </v-avatar>
-      <v-avatar
-        v-else
-        :color="`rgba(${color.rgba.r},${color.rgba.g},${color.rgba.b},${color.rgba.a})`"
-      >
-        <span
-          class="white--text text-h5"
-        >{{ login.substring(0, 2) }}</span>
-      </v-avatar>
-      <div
-        class="title ml-3 login_preview"
-      >
-        {{ login }}
-      </div>
-    </div>
-    <v-card-actions>
-      <v-btn
-        color="grey"
-        text
-        @click="$emit('back')"
-      >
-        Retour
-      </v-btn>
-      <v-btn
-        color="deep-purple accent-4"
-        text
-        @click="register()"
-      >
-        Créer mon compte
-      </v-btn>
-    </v-card-actions>
+      </v-card-item>
+
+      <v-card-item>
+        <v-text-field
+          v-model="password"
+          :append-inner-icon="showPass ? 'mdi-eye' : 'mdi-eye-off'"
+          :rules="[rules.required]"
+          :type="showPass ? 'text' : 'password'"
+          hide-details="auto"
+          label="Mot de passe"
+          @click:append-inner="showPass = !showPass"
+        />
+      </v-card-item>
+
+      <v-card-item>
+        <v-text-field
+          v-model="passwordValidation"
+          :append-inner-icon="showPassVal ? 'mdi-eye' : 'mdi-eye-off'"
+          :rules="[rules.required]"
+          :type="showPassVal ? 'text' : 'password'"
+          hide-details="auto"
+          label="Valider le mot de passe"
+          @click:append-inner="showPassVal = !showPassVal"
+        />
+      </v-card-item>
+
+
+      <v-card-actions>
+        <v-btn
+          @click="$emit('back')"
+        >
+          Retour
+        </v-btn>
+        <v-btn
+          color="primary"
+          type="submit"
+        >
+          Créer mon compte
+        </v-btn>
+      </v-card-actions>
+    </v-form>
   </v-card>
 </template>
 
 <script setup>
 
-import {onMounted, ref} from "vue";
+import {ref} from "vue";
+import {useFirebaseAuth} from "vuefire";
+import {createUserWithEmailAndPassword} from 'firebase/auth'
 
-const valid = ref(false)
-const color = ref(null)
+const emit = defineEmits(['snackBar', 'back'])
+
+const auth = useFirebaseAuth()
+
 const showPass = ref(false)
 const showPassVal = ref(false)
-const imageLink = ref(null)
+
 const rules = ref({
-  required: value => !!value || 'Requis.',
-})
-const login = ref(null)
-const password = ref(null)
-const passwordValidation = ref(null)
+  required: value => {
+    if (value) return true
 
-onMounted(() => {
-  this.$refs.login.focus()
-})
-
-async function register() {
-  if (!this.$refs.form.validate()) {
-    this.$emit('snackBar', 'validationError')
-  } else {
-    if (this.password !== this.passwordValidation) {
-      this.$emit('snackBar', 'passwordNoMatch')
-    } else {
-      const testUserName = await PostService.getUser(this.login)
-      if (testUserName !== '') {
-        this.$emit('snackBar', 'nameAlreadyExists')
-      } else {
-        // await bcrypt.genSalt(10, function (err, salt) {
-        //   bcrypt.hash(self.password, salt, function (err, hash) {
-        //     const data = {
-        //       nom: self.login,
-        //       password: hash,
-        //       color: `rgba(${self.color.rgba.r},${self.color.rgba.g},${self.color.rgba.b},${self.color.rgba.a})`,
-        //       avatar: self.imageLink,
-        //     }
-        //     self.$emit('snackBar', 'successRegister')
-        //     PostService.registerNewAccount(data).then(() => {
-        //       self.$emit('back')
-        //     })
-        //   });
-        // });
-      }
-    }
+    return 'Requis.'
+  },
+  email: value => {
+    const pattern = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    return pattern.test(value) || 'Invalid e-mail.'
   }
+})
+const email = ref("")
+const password = ref("")
+const passwordValidation = ref("")
+
+
+async function submit(event) {
+  let res = await event
+  if (!res.valid)
+    return
+  if (password.value !== passwordValidation.value) {
+    emit('snackBar', 'passwordNoMatch')
+    return
+  }
+  try {
+    await createUserWithEmailAndPassword(auth, email.value, password.value);
+    emit("snackBar", "successRegister");
+    emit('back')
+  } catch (error) {
+    emit('snackBar', error.code + "-" + error.message);
+  }
+
 }
 </script>
 
-<style scoped>
-.login_preview {
-  max-width: 10vw;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-</style>

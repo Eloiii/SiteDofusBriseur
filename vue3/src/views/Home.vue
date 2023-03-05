@@ -1,234 +1,234 @@
 <template>
-    <v-container class="mt-10">
-      <v-row
-        align="center"
-        justify="center"
+  <v-container class="mt-10">
+    <v-row
+      align="center"
+      justify="center"
+    >
+      <h1 class="display-3 text-center">
+        Calculateur brisage Dofus
+      </h1>
+    </v-row>
+    <v-row
+      class="mt-16"
+      justify="center"
+    >
+      <v-card
+        elevation="7"
+        width="35vmax"
       >
-        <h1 class="display-3 text-center">
-          Calculateur brisage Dofus
-        </h1>
-      </v-row>
-      <v-row
-        class="mt-16"
-        justify="center"
-      >
-        <v-card
-          elevation="7"
-          width="35vmax"
-        >
-          <v-card-title>Sélectionner un item</v-card-title>
-          <v-card-actions>
-            <v-autocomplete
-              :items="items"
-              :loading="loading"
-              v-model="itemRecherche"
-              auto-select-first
-              cache-items
-              clearable
-              item-title="name"
-              label="Item"
-              no-data-text="En attente des données..."
-              placeholder="Recherche un item"
-              @click:clear="clearTable"
-            />
-          </v-card-actions>
-        </v-card>
-      </v-row>
-      <v-row
-        class="mt-16"
-        no-gutters
-      >
-        <v-col
-          md="1"
-          offset-md="2"
-        >
-          <v-img
-            v-if="imgURL.length >= 3"
-            :src="getImageUrl(imgURL)"
-            class="mx-auto"
-            height="125px"
-            width="125px"
+        <v-card-title>Sélectionner un item</v-card-title>
+        <v-card-actions>
+          <v-autocomplete
+            :items="items"
+            :loading="loading"
+            v-model="itemRecherche"
+            auto-select-first
+            cache-items
+            clearable
+            item-title="name"
+            label="Item"
+            no-data-text="En attente des données..."
+            placeholder="Recherche un item"
+            @click:clear="clearTable"
           />
-        </v-col>
-        <v-col
-          md="4"
-          offset-md="1"
-        >
-          <v-text-field
+        </v-card-actions>
+      </v-card>
+    </v-row>
+    <v-row
+      class="mt-16"
+      no-gutters
+    >
+      <v-col
+        md="1"
+        offset-md="2"
+      >
+        <v-img
+          v-if="imgURL.length >= 3"
+          :src="getImageUrl(imgURL)"
+          class="mx-auto"
+          height="125px"
+          width="125px"
+        />
+      </v-col>
+      <v-col
+        md="4"
+        offset-md="1"
+      >
+        <v-text-field
+          v-if="isItemRecherche"
+          v-model="coef"
+          :rules="[reglesCoef.required]"
+          append-icon="mdi-content-save"
+          label="Coefficient"
+          outlined
+          prepend-inner-icon="mdi-percent"
+          type="number"
+          @click:append="updateCoef"
+        />
+        <v-snackbar v-model="snackbar">
+          Coefficient enregistré !
+
+          <template v-slot:action="{ attrs }">
+            <v-btn
+              color="success"
+              text
+              v-bind="attrs"
+              @click="snackbar = false"
+            >
+              Fermer
+            </v-btn>
+          </template>
+        </v-snackbar>
+        <div class="text-center">
+          <v-chip
             v-if="isItemRecherche"
-            v-model="coef"
-            :rules="[reglesCoef.required]"
-            append-icon="mdi-content-save"
-            label="Coefficient"
+            class="ma-2"
+            color="success"
             outlined
-            prepend-inner-icon="mdi-percent"
-            type="number"
-            @click:append="updateCoef"
-          />
-          <v-snackbar v-model="snackbar">
-            Coefficient enregistré !
-
-            <template v-slot:action="{ attrs }">
-              <v-btn
-                color="deep-purple accent-4"
-                text
-                v-bind="attrs"
-                @click="snackbar = false"
-              >
-                Fermer
-              </v-btn>
-            </template>
-          </v-snackbar>
-          <div class="text-center">
-            <v-chip
-              v-if="isItemRecherche"
-              class="ma-2"
-              color="deep-purple accent-4"
-              outlined
-              @click="goToLastBrisage"
-            >
-              <v-icon left>
-                mdi-anvil
-              </v-icon>
-              <strong>{{ dateItem }}</strong>
-            </v-chip>
-          </div>
-        </v-col>
-      </v-row>
-      <v-row
-        no-gutters
-      >
-        <v-col
-          md="1"
-          offset-md="2"
-        >
-          <div class="text-center">
-            <v-chip
-              v-if="isItemRecherche"
-              label
-            >
-              Niveau {{ itemLevel }}
-            </v-chip>
-          </div>
-        </v-col>
-      </v-row>
-      <v-row justify="center">
-        <v-col
-          cols="12"
-          sm="8"
-        >
-          <v-data-table
-            :headers="headers"
-            :items="itemTable"
-            :items-per-page="25"
-            class="elevation-1"
-            disable-pagination
-            no-data-text="Sélectionne un item pour voir ses caractéristiques"
-            hide-default-footer
+            @click="goToLastBrisage"
           >
-            <template v-slot:top>
-              <v-alert
-                type="info"
-                variant="tonal"
-              >
-                Clique sur une bulle grise ou verte dans la colonne des revenus pour enregistrer un nouveau brisage
-              </v-alert>
-            </template>
-            <template v-slot:item.prixFocus="{item}">
-              <v-chip
-                :color="sortPrix(item?.raw?.prixFocus)"
-                :disabled="!isANumber(item?.raw?.prixFocus)"
-                @click="addHistory(item?.raw?.caracName, item?.raw?.prixFocus)"
-              >
-                {{ item?.raw?.prixFocus }}
-              </v-chip>
-            </template>
-            <template v-slot:item.prixUnit="{item}">
-              <v-dialog
-                width="auto"
-                v-if="item?.raw.caracName !== 'TOTAL SANS FOCUS'"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    variant="text"
-                    v-bind="props"
-                    @click="newPrix = item.raw.prixUnit"
-                  >
-                    {{ item?.raw?.prixUnit }}
-                  </v-btn>
-                </template>
+            <v-icon left>
+              mdi-anvil
+            </v-icon>
+            <strong>{{ dateItem }}</strong>
+          </v-chip>
+        </div>
+      </v-col>
+    </v-row>
+    <v-row
+      no-gutters
+    >
+      <v-col
+        md="1"
+        offset-md="2"
+      >
+        <div class="text-center">
+          <v-chip
+            v-if="isItemRecherche"
+            label
+          >
+            Niveau {{ itemLevel }}
+          </v-chip>
+        </div>
+      </v-col>
+    </v-row>
+    <v-row justify="center">
+      <v-col
+        cols="12"
+        sm="8"
+      >
+        <v-data-table
+          :headers="headers"
+          :items="itemTable"
+          :items-per-page="25"
+          class="elevation-1"
+          disable-pagination
+          no-data-text="Sélectionne un item pour voir ses caractéristiques"
+          hide-default-footer
+        >
+          <template v-slot:top>
+            <v-alert
+              type="info"
+              variant="tonal"
+            >
+              Clique sur une bulle grise ou verte dans la colonne des revenus pour enregistrer un nouveau brisage
+            </v-alert>
+          </template>
+          <template v-slot:item.prixFocus="{item}">
+            <v-chip
+              :color="sortPrix(item?.raw?.prixFocus)"
+              :disabled="!isANumber(item?.raw?.prixFocus)"
+              @click="addHistory(item?.raw?.caracName, item?.raw?.prixFocus)"
+            >
+              {{ item?.raw?.prixFocus }}
+            </v-chip>
+          </template>
+          <template v-slot:item.prixUnit="{item}">
+            <v-dialog
+              width="auto"
+              v-if="item?.raw.caracName !== 'TOTAL SANS FOCUS'"
+            >
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  variant="text"
+                  v-bind="props"
+                  @click="newPrix = item.raw.prixUnit"
+                >
+                  {{ item?.raw?.prixUnit }}
+                </v-btn>
+              </template>
 
-                <v-card>
-                  <v-card-title>
-                    Changer le prix de la rune
-                  </v-card-title>
-                  <v-card-text>
-                    <v-text-field
-                      v-model="newPrix"
-                      :rules="[numberRule]"
-                      autofocus
-                      hint="Nouveau prix"
-                      single-line
-                      type="number"
-                    />
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn color="primary" @click="save({
+              <v-card>
+                <v-card-title>
+                  Changer le prix de la rune
+                </v-card-title>
+                <v-card-text>
+                  <v-text-field
+                    v-model="newPrix"
+                    :rules="[numberRule]"
+                    autofocus
+                    hint="Nouveau prix"
+                    single-line
+                    type="number"
+                  />
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn color="primary" @click="save({
                     prix: newPrix,
                     caracName: item.raw.caracName,
                   })">
-                      Valider
-                    </v-btn>
-                  </v-card-actions>
+                    Valider
+                  </v-btn>
+                </v-card-actions>
 
 
-                </v-card>
-              </v-dialog>
-            </template>
-          </v-data-table>
-        </v-col>
-      </v-row>
-      <v-row
-        class="mt-16"
-        justify="space-around"
+              </v-card>
+            </v-dialog>
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
+    <v-row
+      class="mt-16"
+      justify="space-around"
+    >
+      <v-dialog
+        v-model="dialogValidation"
+        max-width="600px"
+        persistent
       >
-        <v-dialog
-          v-model="dialogValidation"
-          max-width="600px"
-          persistent
-        >
-          <v-card>
-            <v-card-title>
-              <span class="headline">Le brisage a-t-il été rentable ?</span>
-            </v-card-title>
-            <v-card-actions>
-              <v-btn
-                color="grey"
-                text
-                @click="dialogValidation = false"
-              >
-                Annuler
-              </v-btn>
-              <v-spacer/>
-              <v-btn
-                color="red"
-                text
-                @click="addHistorique(false)"
-              >
-                Non
-              </v-btn>
-              <v-btn
-                color="deep-purple accent-4"
-                text
-                @click="addHistorique(true)"
-              >
-                Oui
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-row>
-    </v-container>
+        <v-card>
+          <v-card-title>
+            <span class="headline">Le brisage a-t-il été rentable ?</span>
+          </v-card-title>
+          <v-card-actions>
+            <v-btn
+              color="grey"
+              text
+              @click="dialogValidation = false"
+            >
+              Annuler
+            </v-btn>
+            <v-spacer/>
+            <v-btn
+              color="red"
+              text
+              @click="addHistorique(false)"
+            >
+              Non
+            </v-btn>
+            <v-btn
+              color="success"
+              text
+              @click="addHistorique(true)"
+            >
+              Oui
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>

@@ -39,48 +39,46 @@ import RegisterCard from "./RegisterCard"
 import {ref} from "vue";
 
 const loginView = ref(true)
-const snackBarColor = ref(null)
-const snackBarMessage = ref(null)
+const snackBarColor = ref("")
+const snackBarMessage = ref("")
 const snackbar = ref(false)
 
 function snackBar(arg) {
   switch (arg) {
     case 'passwordNoMatch':
       snackBarMessage.value = "Les mots de passe ne correspondent pas"
-      snackBarColor.value = "red lighten-1"
+      snackBarColor.value = "error"
       break
     case 'successRegister':
       snackBarMessage.value = "Nouveau compte enregistré avec succès"
-      snackBarColor.value = "deep-purple accent-4"
+      snackBarColor.value = "success"
       break
     case 'wrongLogin':
       snackBarMessage.value = "Nom ou mot de passe incorrect(s)"
-      snackBarColor.value = "red lighten-1"
+      snackBarColor.value = "error"
       break
     case 'loginSuccessful':
       snackBarMessage.value = "Connexion réussie"
-      snackBarColor.value = "deep-purple accent-4"
+      snackBarColor.value = "success"
       break
     case 'nameAlreadyExists':
       snackBarMessage.value = "Ce nom existe déjà, choisis-en un autre"
-      snackBarColor.value = "red lighten-1"
+      snackBarColor.value = "error"
       break
     case 'missingInfo':
       snackBarMessage.value = "Il manque des informations à compléter"
-      snackBarColor.value = "red lighten-1"
+      snackBarColor.value = "error"
       break
     case 'validationError':
       snackBarMessage.value = "Erreur lors de la validation"
-      snackBarColor.value = "red lighten-1"
+      snackBarColor.value = "error"
       break
+    default:
+      snackBarMessage.value = arg
+      snackBarColor.value = "error"
 
   }
   snackbar.value = true
-}
-
-function loginSuccessful() {
-  snackBar('loginSuccessful')
-  $router.push({name: 'Home'})
 }
 </script>
 

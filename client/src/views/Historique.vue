@@ -1,88 +1,85 @@
 <template>
-  <v-app>
-    <v-container class="mt-10">
-      <v-row
-        justify="center"
-      >
-        <v-card width="90%">
-          <v-card-title>
-            Historique des brisages
+  <v-container class="mt-10">
+    <v-row
+      justify="center"
+    >
+      <v-card width="90%">
+        <v-card-title>
+          Historique des brisages
 
-            <v-spacer />
-            <v-switch
-              v-model="switchName"
-              inset
-              label="Ne voir que mes brisages"
+          <v-spacer />
+          <v-switch
+            v-model="switchName"
+            inset
+            label="Ne voir que mes brisages"
+          />
+          <v-spacer />
+
+          <v-text-field
+            v-model="search"
+            append-icon="mdi-magnify"
+            hide-details
+            label="Recherche item"
+            single-line
+          />
+        </v-card-title>
+        <v-data-table
+          :headers="headers"
+          :items="itemTable"
+          :items-per-page="12"
+          :loading="loading"
+          :options.sync="options"
+          :search="search"
+          :sort-by.sync="sortBy"
+          :sort-desc.sync="sortDesc"
+        >
+          <template v-slot:header.type>
+            <v-select
+              v-model="itemType"
+              :items="itemsType"
+              :value="'Tout'"
+              label="Type de l'item"
             />
-            <v-spacer />
-
+          </template>
+          <template v-slot:header.level>
             <v-text-field
-              v-model="search"
-              append-icon="mdi-magnify"
-              hide-details
-              label="Recherche item"
-              single-line
+              v-model="itemLevel"
+              clearable
+              label="Level minimum"
+              max-width="25px"
+              type="number"
+              @click:clear="resetItemLevel"
             />
-          </v-card-title>
-          <v-data-table
-            :headers="headers"
-            :items="itemTable"
-            :items-per-page="12"
-            :loading="loading"
-            :options.sync="options"
-            :search="search"
-            :sort-by.sync="sortBy"
-            :sort-desc.sync="sortDesc"
-          >
-            <template v-slot:header.type>
-              <v-select
-                v-model="itemType"
-                :items="itemsType"
-                :value="'Tout'"
-                label="Type de l'item"
+          </template>
+          <template v-slot:item.rentable="{ item }">
+            <v-simple-checkbox
+              v-model="item.rentable"
+              disabled
+            />
+          </template>
+          <template v-slot:item.prix="{ item }">
+            {{ new Intl.NumberFormat('fr-FR').format(item.prix) }}
+          </template>
+          <template v-slot:item.item="{ item }">
+            <div class="nameIcon">
+              <span>
+                {{ item.item }}
+              </span>
+              <v-img
+                v-if="item.img"
+                :src="require(`../assets/items/${item.img}`)"
+                contain
+                height="50px"
+                width="50px"
               />
-            </template>
-            <template v-slot:header.level>
-              <v-text-field
-                v-model="itemLevel"
-                clearable
-                label="Level minimum"
-                max-width="25px"
-                type="number"
-                @click:clear="resetItemLevel"
-              />
-            </template>
-            <template v-slot:item.rentable="{ item }">
-              <v-simple-checkbox
-                v-model="item.rentable"
-                disabled
-              />
-            </template>
-            <template v-slot:item.prix="{ item }">
-              {{ new Intl.NumberFormat('fr-FR').format(item.prix) }}
-            </template>
-            <template v-slot:item.item="{ item }">
-              <div class="nameIcon">
-                <span>
-                  {{ item.item }}
-                </span>
-                <v-img
-                  v-if="item.img"
-                  :src="require(`../assets/items/${item.img}`)"
-                  contain
-                  height="50px"
-                  width="50px"
-                />
-              </div>
-            </template>
-          </v-data-table>
-        </v-card>
-      </v-row>
-    </v-container>
-  </v-app>
+            </div>
+          </template>
+        </v-data-table>
+      </v-card>
+    </v-row>
+  </v-container>
 </template>
-<script>
-import PostService from "../PostService";
+<script setup>
 
 export default {
   data: () => ({
