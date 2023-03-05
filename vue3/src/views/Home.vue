@@ -4,7 +4,7 @@
       align="center"
       justify="center"
     >
-      <h1 class="display-3 text-center">
+      <h1>
         Calculateur brisage Dofus
       </h1>
     </v-row>
@@ -13,8 +13,10 @@
       justify="center"
     >
       <v-card
-        elevation="7"
-        width="35vmax"
+        elevation="3"
+        class="pa-8"
+        width="40%"
+        variant="outlined"
       >
         <v-card-title>Sélectionner un item</v-card-title>
         <v-card-actions>
@@ -22,9 +24,9 @@
             :items="items"
             :loading="loading"
             v-model="itemRecherche"
-            auto-select-first
-            cache-items
+            variant="outlined"
             clearable
+            hide-no-data
             item-title="name"
             label="Item"
             no-data-text="En attente des données..."
@@ -32,87 +34,72 @@
             @click:clear="clearTable"
           />
         </v-card-actions>
+        <v-card-item>
+          <v-text-field
+            class="mt-2"
+            v-if="isItemRecherche"
+            v-model="coef"
+            :rules="[reglesCoef.required]"
+            append-inner-icon="mdi-content-save"
+            label="Coefficient"
+            variant="outlined"
+            prepend-inner-icon="mdi-percent"
+            type="number"
+            @click:append-inner="updateCoef"
+          />
+          <v-snackbar v-model="snackbar">
+            Coefficient enregistré !
+
+            <template v-slot:action="{ attrs }">
+              <v-btn
+                variant="text"
+                v-bind="attrs"
+                @click="snackbar = false"
+              >
+                Fermer
+              </v-btn>
+            </template>
+          </v-snackbar>
+        </v-card-item>
+        <v-card-text>
+          <v-row align="center" no-gutters>
+            <v-col>
+              <v-img
+                v-if="imgURL.length >= 3"
+                :src="getImageUrl(imgURL)"
+                class="mx-auto"
+                height="125px"
+                width="125px"
+              />
+              <div class="text-center">
+                <v-chip
+                  v-if="isItemRecherche"
+                  label
+                >
+                  Niveau {{ itemLevel }}
+                </v-chip>
+              </div>
+            </v-col>
+            <v-col>
+              <div class="text-center">
+                <v-chip
+                  v-if="isItemRecherche"
+                  class="ma-2"
+                  variant="outlined"
+                  @click="goToLastBrisage"
+                >
+                  <v-icon left>
+                    mdi-anvil
+                  </v-icon>
+                  <strong>{{ dateItem }}</strong>
+                </v-chip>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-text>
       </v-card>
     </v-row>
-    <v-row
-      class="mt-16"
-      no-gutters
-    >
-      <v-col
-        md="1"
-        offset-md="2"
-      >
-        <v-img
-          v-if="imgURL.length >= 3"
-          :src="getImageUrl(imgURL)"
-          class="mx-auto"
-          height="125px"
-          width="125px"
-        />
-      </v-col>
-      <v-col
-        md="4"
-        offset-md="1"
-      >
-        <v-text-field
-          v-if="isItemRecherche"
-          v-model="coef"
-          :rules="[reglesCoef.required]"
-          append-icon="mdi-content-save"
-          label="Coefficient"
-          outlined
-          prepend-inner-icon="mdi-percent"
-          type="number"
-          @click:append="updateCoef"
-        />
-        <v-snackbar v-model="snackbar">
-          Coefficient enregistré !
-
-          <template v-slot:action="{ attrs }">
-            <v-btn
-              color="success"
-              text
-              v-bind="attrs"
-              @click="snackbar = false"
-            >
-              Fermer
-            </v-btn>
-          </template>
-        </v-snackbar>
-        <div class="text-center">
-          <v-chip
-            v-if="isItemRecherche"
-            class="ma-2"
-            color="success"
-            outlined
-            @click="goToLastBrisage"
-          >
-            <v-icon left>
-              mdi-anvil
-            </v-icon>
-            <strong>{{ dateItem }}</strong>
-          </v-chip>
-        </div>
-      </v-col>
-    </v-row>
-    <v-row
-      no-gutters
-    >
-      <v-col
-        md="1"
-        offset-md="2"
-      >
-        <div class="text-center">
-          <v-chip
-            v-if="isItemRecherche"
-            label
-          >
-            Niveau {{ itemLevel }}
-          </v-chip>
-        </div>
-      </v-col>
-    </v-row>
-    <v-row justify="center">
+    <v-row justify="center" class="mt-3">
       <v-col
         cols="12"
         sm="8"
@@ -121,13 +108,14 @@
           :headers="headers"
           :items="itemTable"
           :items-per-page="25"
-          class="elevation-1"
+          class="elevation-3"
           disable-pagination
           no-data-text="Sélectionne un item pour voir ses caractéristiques"
           hide-default-footer
         >
           <template v-slot:top>
             <v-alert
+              closable
               type="info"
               variant="tonal"
             >
@@ -203,23 +191,22 @@
           </v-card-title>
           <v-card-actions>
             <v-btn
-              color="grey"
-              text
+              variant="text"
               @click="dialogValidation = false"
             >
               Annuler
             </v-btn>
             <v-spacer/>
             <v-btn
-              color="red"
-              text
+              color="error"
+              variant="text"
               @click="addHistorique(false)"
             >
               Non
             </v-btn>
             <v-btn
               color="success"
-              text
+              variant="text"
               @click="addHistorique(true)"
             >
               Oui
