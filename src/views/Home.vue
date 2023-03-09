@@ -253,7 +253,6 @@ const isItemRecherche = ref(false)
 const maxPrix = ref(-5)
 const dateItem = ref("")
 const itemType = ref("")
-const focusConfirmation = ref("")
 const selectedCarac = ref("")
 const selectedPrice = ref("")
 const reglesCoef = ref({
@@ -291,7 +290,7 @@ onMounted(async () => {
     const equipments = await getAllEquipments()
     const weapons = await getAllWeapons()
 
-    items.value = [...filterItems(equipments), ...filterItems(weapons)].slice(450, 470);
+    items.value = [...filterItems(equipments), ...filterItems(weapons)].slice(300, 350);
     sessionStorage.setItem('items', JSON.stringify(items.value))
   }
   items.value.sort();
